@@ -17,7 +17,7 @@ export '../features/home/logic/home_provider.dart';
 export '../constans/app_colors.dart';
 export '../core/widgets/app_buttons.dart';
 export 'package:get/get_utils/get_utils.dart';
-export '../maklerDacha_app.dart';
+export 'package:makler_dacha/maklerDacha_app.dart' hide rootNavigatorKey;
 export 'package:flutter_svg/flutter_svg.dart';
 export '../constans/local_icons.dart';
 export '../features/home/presentation/widgets/header_widget.dart';
@@ -69,5 +69,4 @@ export 'package:makler_dacha/features/group/presentation/pages/group_login.dart'
 export 'package:makler_dacha/features/group/presentation/pages/info_page.dart';
 export 'package:makler_dacha/features/auth/presentation/register/presentation/pages/register_page.dart';
 export 'package:hive_flutter/hive_flutter.dart';
-export 'package:image_picker/image_picker.dart';
 export 'package:connectivity_plus/connectivity_plus.dart';

@@ -40,14 +40,14 @@ class CustomSearchContainer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(width: 16), // Отступ слева
+              const Gap(16), // Отступ слева
               SvgPicture.asset(
                 LocalIcons.search,
                 width: 24,
                 height: 24,
                 color: Colors.black54,
               ),
-              const SizedBox(width: 12), // Отступ между иконкой и текстом
+              const Gap(12), // Отступ между иконкой и текстом
               Expanded(
                 child: Text(
                   placeholderText,
@@ -58,7 +58,7 @@ class CustomSearchContainer extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 16), // Отступ справа
+              const Gap(16), // Отступ справа
             ],
           ),
         ),

@@ -146,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                     if (success) {
                       Get.snackbar("Успех", "Вход выполнен!",
                           backgroundColor: Colors.green);
-                      Get.offAllNamed(Routes.home);
+                      Get.offAllNamed(Routes.homePage);
                     } else {
                       Get.snackbar("Ошибка", "Неверный логин или пароль",
                           backgroundColor: Colors.red);

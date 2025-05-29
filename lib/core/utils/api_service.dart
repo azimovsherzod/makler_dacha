@@ -4,7 +4,14 @@ import '../../../../constans/imports.dart';
 
 class ApiService {
   final Dio dio = Dio(BaseOptions(
-    baseUrl: baseUrl, // API bazaviy URL
+    baseUrl: baseUrl,
+    connectTimeout: const Duration(seconds: 30),
+    receiveTimeout: const Duration(seconds: 30),
+    followRedirects: false, // Yo'naltirishni o'chirish
+    validateStatus: (status) {
+      return status != null &&
+          status < 500; // 500 dan past status kodlarni qabul qilish
+    },
     headers: {
       'Content-Type': 'application/json',
     },
@@ -34,10 +41,18 @@ class ApiService {
     ));
   }
 
-  Future<dynamic> makeGetRequest(String url) async {
+  Future<dynamic> makeGetRequest(String url,
+      {Map<String, dynamic>? queryParameters}) async {
     try {
       print("📡 GET $url");
-      final response = await dio.get(url);
+      if (queryParameters != null) {
+        print("📦 Query Parameters: $queryParameters");
+      }
+
+      final response = await dio.get(
+        url,
+        queryParameters: queryParameters, // Query parametersni qo'shish
+      );
 
       // Log javob
       print("✅ Статус ответа: ${response.statusCode}");
@@ -150,7 +165,8 @@ class ApiService {
 
   Future<dynamic> makeDeleteRequest(String url) async {
     try {
-      print("📡 DELETE $url");
+      // To'liq URLni chop etish
+      print("📡 DELETE ${dio.options.baseUrl}$url");
 
       final response = await dio.delete(url);
 
@@ -158,30 +174,32 @@ class ApiService {
       print("✅ Статус ответа: ${response.statusCode}");
       print("✅ Ответ сервера: ${response.data}");
 
-      // JSONni to'g'ri aylantirish
-      if (response.data is Map) {
-        return Map<String, dynamic>.from(response.data);
-      } else if (response.data is List) {
-        return List<dynamic>.from(response.data);
-      } else {
-        print("⚠️ Noma'lum formatdagi javob: ${response.data}");
-        return response.data;
-      }
-    } on DioError catch (e) {
-      _handleError(e, "DELETE", url);
+      return response.data;
+    } on DioException catch (e) {
+      print("❌ Ошибка (DELETE ${e.response?.statusCode}): $url");
+      print("❌ Детали ошибки: ${e.response?.data}");
       return null;
     }
   }
 
-  void _handleError(DioError e, String method, String endpoint) {
+  void _handleError(DioException e, String method, String endpoint) {
     if (e.response != null) {
       print("❌ Ошибка ($method ${e.response!.statusCode}): $endpoint");
       print("❌ Детали ошибки: ${e.response!.data}");
-      Get.snackbar(
-        "Ошибка",
-        "Ошибка $method-запроса: ${e.response!.statusCode}",
-        backgroundColor: Colors.red,
-      );
+      if (e.response!.statusCode == 301) {
+        print("⚠️ Yo'naltirish xatosi: $endpoint");
+        Get.snackbar(
+          "Ошибка",
+          "Yo'naltirish xatosi: $endpoint",
+          backgroundColor: Colors.orange,
+        );
+      } else {
+        Get.snackbar(
+          "Ошибка",
+          "Ошибка $method-запроса: ${e.response!.statusCode}",
+          backgroundColor: Colors.red,
+        );
+      }
     } else {
       print("❌ Неизвестная ошибка при $method-запросе: $e");
       Get.snackbar(

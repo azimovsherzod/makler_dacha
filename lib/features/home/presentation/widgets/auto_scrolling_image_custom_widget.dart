@@ -77,18 +77,13 @@ class _AutoScrollingImageCustomWidgetState
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image.network(
+                      child: Image.asset(
                         dacha.images?.isNotEmpty == true
                             ? dacha.images![index]
-                            : "https://via.placeholder.com/300",
+                            : LocalImages.errorImage,
                         fit: BoxFit.cover,
                         width: double.infinity,
                         height: 300,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        },
                         errorBuilder: (context, error, stackTrace) {
                           return const Icon(Icons.broken_image,
                               size: 50, color: Colors.red);

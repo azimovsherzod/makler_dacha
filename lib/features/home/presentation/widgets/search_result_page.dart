@@ -11,11 +11,11 @@ class SearchResultPage extends StatefulWidget {
 
 class _SearchResultPageState extends State<SearchResultPage> {
   bool _showMap = false;
-  // final MapObjectId markerId = MapObjectId('marker');
-  // late YandexMapController mapController;
 
   @override
   Widget build(BuildContext context) {
+    final profileProvider = Provider.of<ProfileProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.city),
@@ -34,9 +34,9 @@ class _SearchResultPageState extends State<SearchResultPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "1800 ta dacha topildi ",
-                  style: TextStyle(
+                Text(
+                  "${profileProvider.dachas.length} ta dacha topildi",
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -75,13 +75,37 @@ class _SearchResultPageState extends State<SearchResultPage> {
           Expanded(
             child: Stack(
               children: [
-                ListView(
-                  children: const [
-                    ListingCard(),
-                    ListingCard(),
-                    ListingCard(),
-                  ],
-                ),
+                profileProvider.dachas.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "Hozircha hech qanday dacha mavjud emas.",
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: profileProvider.dachas.length,
+                        itemBuilder: (context, index) {
+                          final dacha = profileProvider.dachas[index];
+                          final addressOptions = profileProvider
+                                  .availablePopularPlaces
+                                  ?.map((place) {
+                                if (place is Map<String, dynamic> &&
+                                    place.containsKey('name') &&
+                                    place['name'] is String) {
+                                  return place['name'] as String;
+                                } else {
+                                  print(
+                                      "❌ Noto'g'ri formatdagi element: $place");
+                                  return "Noma'lum joy";
+                                }
+                              }).toList() ??
+                              [];
+                          return ListingCard(
+                            dacha: dacha,
+                            addressOptions: addressOptions,
+                          );
+                        },
+                      ),
                 Positioned(
                   bottom: 20,
                   right: 16,

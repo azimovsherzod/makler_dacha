@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:intl/intl.dart';
 
 class DachaModel extends Equatable {
   DachaModel({
@@ -15,8 +16,8 @@ class DachaModel extends Equatable {
     required this.price,
     required this.description,
     required this.phone,
-    required this.transactionType,
-    required this.propertyType,
+    this.transactionType = "rent",
+    this.propertyType = "dacha",
     required this.popularPlace,
     required this.clientType,
     required this.user,
@@ -97,25 +98,27 @@ class DachaModel extends Equatable {
       'name': name,
       'price': price,
       'description': description,
-      'phone': phone,
+      'phone': phone.toString(),
       'hall_count': hallCount,
       'beds_count': bedsCount,
-      'transaction_type': transactionType.isNotEmpty
-          ? transactionType
-          : "rent", // Default value
+      'transaction_type': transactionType.isEmpty ? 'rent' : transactionType,
       'facilities': facilities,
       'popular_place': popularPlace,
       'client_type': clientType,
-      'address': address,
-      'property_type':
-          propertyType.isNotEmpty ? propertyType : "dacha", // Default value
-      'images': images,
+      // 'address': address,
+      'property_type': propertyType.isEmpty ? 'dacha' : propertyType,
+      // Rasm faqat yo‘li bo‘lsa:
+      'images': images.map((e) {
+        if (e is Map && e.containsKey('image')) {
+          return e['image'];
+        }
+        return e.toString();
+      }).toList(),
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
       'is_active': isActive,
-      'deleted_at': deletedAt is DateTime
-          ? deletedAt.toIso8601String().split('T').first
-          : deletedAt, // Check type
+      'deleted_at':
+          deletedAt != null ? DateFormat('yyyy-MM-dd').format(deletedAt) : null,
       'deleted': deleted,
       'user': user,
     };
@@ -123,46 +126,42 @@ class DachaModel extends Equatable {
 
   factory DachaModel.fromJson(Map<String, dynamic> json) {
     return DachaModel(
-      id: json["id"] ?? 0,
-      createdAt: json["created_at"] != null
-          ? DateTime.tryParse(json["created_at"])
+      id: json['id'] is String ? int.parse(json['id']) : json['id'] ?? 0,
+      name: json['name'] ?? '',
+      price: json['price'] ?? 0,
+      description: json['description'] ?? '',
+      phone: json['phone']?.toString() ?? '',
+      hallCount: json['hall_count'] ?? 0,
+      bedsCount: json['beds_count'] ?? 0,
+      transactionType: (json['transaction_type'] ?? 'rent').isEmpty
+          ? 'rent'
+          : json['transaction_type'],
+      images: (json['images'] as List<dynamic>?)?.map((e) {
+            if (e is Map && e.containsKey('image')) {
+              return e['image'];
+            }
+            return e.toString();
+          }).toList() ??
+          [],
+      facilities: List<int>.from(json['facilities'] ?? []),
+      address: json['address'] ?? '',
+      propertyType: (json['property_type'] ?? 'dacha').isEmpty
+          ? 'dacha'
+          : json['property_type'],
+      popularPlace: json['popular_place'] ?? 0,
+      clientType: json['client_type'] ?? 0,
+      user: json['user'] ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
           : null,
-      updatedAt: json["updated_at"] != null
-          ? DateTime.tryParse(json["updated_at"])
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
           : null,
-      isActive: json["is_active"] ?? false,
-      deletedAt: json["deleted_at"],
-      deleted: json["deleted"] ?? false,
-      name: json["name"] ?? "",
-      address: json["address"] ?? "",
-      bedsCount: json["beds_count"],
-      hallCount: json["hall_count"],
-      price: json["price"],
-      description: json["description"],
-      phone: json["phone"],
-      transactionType: json["transaction_type"]?.isNotEmpty == true
-          ? json["transaction_type"]
-          : "rent",
-      propertyType: json["property_type"] ?? "",
-      popularPlace: json["popular_place"],
-      clientType: json["client_type"],
-      user: json["user"],
-      facilities: json["facilities"] == null
-          ? []
-          : List<dynamic>.from(json["facilities"].map((x) {
-              if (x is Map) {
-                return Map<String, dynamic>.from(x);
-              }
-              return x;
-            })),
-      images: json["images"] == null
-          ? []
-          : List<dynamic>.from(json["images"].map((x) {
-              if (x is Map) {
-                return Map<String, dynamic>.from(x);
-              }
-              return x;
-            })),
+      isActive: json['is_active'] ?? false,
+      deletedAt: json['deleted_at'] != null
+          ? DateTime.parse(json['deleted_at'])
+          : null,
+      deleted: json['deleted'] ?? false,
     );
   }
 

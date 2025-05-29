@@ -56,7 +56,7 @@ class AuthProvider extends ChangeNotifier {
         // ✅ Успешная регистрация
         Get.snackbar('✅ Успех', 'Регистрация прошла успешно!',
             backgroundColor: Colors.green);
-        Get.offAndToNamed(Routes.home);
+        Get.offAndToNamed(Routes.homePage);
       } else if (response != null && response.containsKey('detail')) {
         String errorMsg = response['detail'].toString();
 

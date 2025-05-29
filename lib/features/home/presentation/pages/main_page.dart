@@ -1,5 +1,3 @@
-import 'package:makler_dacha/features/group/presentation/pages/info_page.dart';
-
 import '../../../../constans/imports.dart';
 
 class MainPage extends StatefulWidget {
@@ -11,10 +9,11 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   int _selectedIndex = 0;
-  static final List<Widget> _screenList = <Widget>[
-    const HomePage(),
-    const InfoPage(),
-    const ProfilePage(),
+
+  static final List _screenList = [
+    HomePage(),
+    InfoPage(),
+    ProfilePage(),
   ];
 
   void onItemTap(int index) {
@@ -29,70 +28,24 @@ class _MainPageState extends State<MainPage> {
       body: _screenList[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        fixedColor: Colors.black,
+        selectedItemColor: AppColors.primaryColor,
+        unselectedItemColor: Colors.grey,
         onTap: onItemTap,
-        items: [
+        items: const [
           BottomNavigationBarItem(
-            label: 'Favourite',
-            icon: SvgPicture.asset(
-              LocalIcons.heart,
-              width: 30,
-              theme: SvgTheme(currentColor: AppColors.primaryColor),
-            ),
+            label: 'Home',
+            icon: Icon(Icons.home),
           ),
           BottomNavigationBarItem(
             label: 'Group',
-            icon: SvgPicture.asset(
-              LocalIcons.human,
-              width: 30,
-              theme: SvgTheme(currentColor: AppColors.primaryColor),
-            ),
+            icon: Icon(Icons.group),
           ),
           BottomNavigationBarItem(
             label: 'Profile',
-            icon: Icon(
-              Icons.person,
-              size: 30,
-            ),
+            icon: Icon(Icons.person),
           ),
         ],
       ),
-
-      // Container(
-      //   width: double.infinity,
-      //   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      //   child: Row(
-      //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //     children: [
-      //       IconButton(
-      //         onPressed: () {},
-      //         icon: SvgPicture.asset(
-      //           LocalIcons.heart,
-      //           width: 30,
-      //           color: AppColors.primaryColor,
-      //         ),
-      //       ),
-      //       GestureDetector(
-      //         onTap: () => Get.toNamed(Routes.groupPage),
-      //         child: SvgPicture.asset(
-      //           LocalIcons.human,
-      //           width: 30,
-      //           color: AppColors.primaryColor,
-      //         ),
-      //       ),
-      //       IconButton(
-      //         onPressed: () {
-      //           Get.toNamed(Routes.profilePage);
-      //         },
-      //         icon: Icon(
-      //           Icons.person,
-      //           size: 30,
-      //           color: AppColors.primaryColor,
-      //         ),
-      //       ),
-      //     ],
-      //   ),
-      // ),
     );
   }
 }

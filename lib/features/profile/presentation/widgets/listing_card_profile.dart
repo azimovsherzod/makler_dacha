@@ -3,25 +3,83 @@ import '../../../../constans/imports.dart';
 class ListingCardProfile extends StatelessWidget {
   final DachaModel dacha;
   final List<String> addressOptions;
+  final ProfileProvider profileProvider;
 
   const ListingCardProfile({
     super.key,
     required this.dacha,
     required this.addressOptions,
+    required this.profileProvider,
   });
+  String getImageUrl(dynamic images) {
+    if (images == null || images.isEmpty) {
+      return 'https://avatars.mds.yandex.net/i?id=b4801a50e1801125b3173ade9c4a6ffb_l-4948104-images-thumbs&n=13';
+    }
+    final first = images.first;
+    if (first is String) {
+      if (first.startsWith('http')) return first;
+      // Agar "/dacha/" bilan boshlansa, "/images/dacha/" ga almashtiramiz
+      if (first.startsWith('/dacha/')) {
+        return '$domain/images/dacha${first.substring(6)}';
+      }
+      if (first.startsWith('/images/dacha/')) {
+        return '$domain$first';
+      }
+      if (first.startsWith('/')) return '$domain$first';
+      return first;
+    }
+    if (first is Map && first['image'] != null) {
+      final img = first['image'].toString();
+      if (img.startsWith('http')) return img;
+      if (img.startsWith('/dacha/')) {
+        return '$domain/images/dacha${img.substring(6)}';
+      }
+      if (img.startsWith('/images/dacha/')) {
+        return '$domain$img';
+      }
+      if (img.startsWith('/')) return '$domain$img';
+      return img;
+    }
+    return 'https://avatars.mds.yandex.net/i?id=b4801a50e1801125b3173ade9c4a6ffb_l-4948104-images-thumbs&n=13';
+  }
+
+  String getClientTypeName(dynamic id) {
+    final clientType = profileProvider.availableClientTypes.firstWhere(
+      (type) => type['id']?.toString() == id?.toString(),
+      orElse: () => {"name": "Noma'lum"},
+    );
+    return clientType['name'] as String? ?? "Noma'lum tur";
+  }
+
+  String getPopularPlaceName(dynamic id, List<String> addressOptions) {
+    int? index;
+    if (id == null) return "Noma'lum joy";
+    if (id is int) {
+      index = id;
+    } else if (id is String) {
+      index = int.tryParse(id);
+    }
+    if (index != null && index > 0 && index <= addressOptions.length) {
+      return addressOptions[index - 1];
+    }
+    return "Noma'lum joy";
+  }
 
   @override
   Widget build(BuildContext context) {
-    String selectedAddress = dacha.address;
-    bool isActive = dacha.isActive;
+    final String name = dacha.name.isNotEmpty ? dacha.name : "Noma'lum dacha";
+    final bool isActive = dacha.isActive;
+    final String image = (dacha.images != null && dacha.images.isNotEmpty)
+        ? dacha.images.first
+        : LocalImages.errorImage;
 
     return Material(
       color: Colors.transparent,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: () {
-          print("Card tapped: \${dacha.name}");
-          Get.toNamed(Routes.profileDetail);
+          print("Card tapped: $name");
+          Get.toNamed(Routes.profileDetail, arguments: dacha);
         },
         child: Container(
           margin: const EdgeInsets.symmetric(vertical: 8),
@@ -46,12 +104,18 @@ class ListingCardProfile extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: Image.network(
-                      (dacha.images != null && dacha.images.isNotEmpty)
-                          ? dacha.images.first
-                          : "https://get.wallhere.com/photo/temple-reflection-Tourism-tower-France-Paris-Eiffel-Tower-pagoda-tree-landmark-wat-place-of-worship-87935.jpg",
+                      getImageUrl(dacha.images),
                       height: 200,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          LocalImages.errorImage,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        );
+                      },
                     ),
                   ),
                   Positioned(
@@ -60,10 +124,17 @@ class ListingCardProfile extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Text(
-                        dacha.name,
+                        name,
                         style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
@@ -78,9 +149,11 @@ class ListingCardProfile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        isActive ? "Active" : "Not Active",
+                        isActive ? "Bo'sh" : "Band",
                         style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -88,11 +161,19 @@ class ListingCardProfile extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                "\$${dacha.price}/sutka",
+                "\$${dacha.price ?? 0}/sutka",
                 style: const TextStyle(fontSize: 18),
               ),
               const SizedBox(height: 12),
-              Text(dacha.address),
+              Text(
+                getPopularPlaceName(dacha.popularPlace, addressOptions),
+                style: const TextStyle(fontSize: 16, color: Colors.black),
+              ),
+              const Gap(12),
+              Text(
+                getClientTypeName(dacha.clientType),
+                style: const TextStyle(fontSize: 16),
+              ),
               const SizedBox(height: 12),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -100,9 +181,13 @@ class ListingCardProfile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     InfoIconWithText(
-                        icon: LocalIcons.bed, text: "${dacha.bedsCount}"),
+                      icon: LocalIcons.bed,
+                      text: "${dacha.bedsCount ?? 0}",
+                    ),
                     InfoIconWithText(
-                        icon: LocalIcons.bath, text: "${dacha.hallCount}"),
+                      icon: LocalIcons.bath,
+                      text: "${dacha.hallCount ?? 0}",
+                    ),
                   ],
                 ),
               ),

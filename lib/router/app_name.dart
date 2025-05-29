@@ -11,9 +11,9 @@ sealed class AppRoutes {
       case Routes.onBoarding:
         return CupertinoPageRoute(
             builder: (context) => const OnBoardingPage(), settings: settings);
-      case Routes.home:
+      case Routes.homePage:
         return CupertinoPageRoute(
-            builder: (context) => const HomePage(), settings: settings);
+            builder: (context) => HomePage(), settings: settings);
       case Routes.main:
         return CupertinoPageRoute(
             builder: (context) => const MainPage(), settings: settings);
@@ -24,7 +24,9 @@ sealed class AppRoutes {
         return CupertinoPageRoute(
             builder: (context) {
               final dacha = settings.arguments as DachaModel;
-              return ListingDetailPage(dacha: dacha);
+              return ListingDetailPage(
+                dacha: dacha,
+              );
             },
             settings: settings);
       case Routes.profileDetail:
@@ -44,6 +46,8 @@ sealed class AppRoutes {
                 ),
               );
             }
+            print(
+                "Card tapped: ${dacha.name}"); // dacha.name qiymatini chop etish
             return ProfileDetail(dacha: dacha);
           },
           settings: settings,
@@ -79,12 +83,12 @@ sealed class AppRoutes {
                 price: 0,
                 description: '',
                 phone: '',
-                popularPlace: 0, // Исправлено: заменено '' на 0
-                clientType: 0, // Исправлено: заменено '' на 0
+                popularPlace: 0,
+                clientType: 0,
                 facilities: [],
                 transactionType: '',
                 propertyType: "",
-                user: 0, // Исправлено: заменено '' на 0
+                user: 0,
                 images: []);
 
         return CupertinoPageRoute(
