@@ -65,14 +65,32 @@ class GroupLogin extends StatelessWidget {
     final _formKey = GlobalKey<FormState>();
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 6, 8, 19),
+      appBar: AppBar(
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: AppColors.primaryColor,
+            size: 30,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Container(
         margin: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(LocalImages.logosTelegram),
-            const Gap(70),
+            const Gap(20),
+            Text(
+              "Gruppaga qo'shilish uchun telefon raqamingizni kiriting",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 25, color: AppColors.primaryColor),
+            ),
+            const Gap(40),
             Form(
               key: _formKey,
               child: TextFormField(
@@ -89,15 +107,18 @@ class GroupLogin extends StatelessWidget {
                   prefixText: "+998 ",
                   prefixStyle: TextStyle(
                     fontSize: 17,
-                    color: Colors.white,
+                    color: AppColors.primaryColor,
                     fontWeight: FontWeight.bold,
                   ),
                   labelText: "Phone Number",
-                  labelStyle: TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(
+                    color: AppColors.primaryColor,
+                  ),
                   border: OutlineInputBorder(),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(color: Colors.white, width: 2.0),
+                    borderSide:
+                        BorderSide(color: AppColors.primaryColor, width: 2.0),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),

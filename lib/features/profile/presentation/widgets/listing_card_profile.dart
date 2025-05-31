@@ -11,6 +11,7 @@ class ListingCardProfile extends StatelessWidget {
     required this.addressOptions,
     required this.profileProvider,
   });
+
   String getImageUrl(dynamic images) {
     if (images == null || images.isEmpty) {
       return 'https://avatars.mds.yandex.net/i?id=b4801a50e1801125b3173ade9c4a6ffb_l-4948104-images-thumbs&n=13';
@@ -18,7 +19,6 @@ class ListingCardProfile extends StatelessWidget {
     final first = images.first;
     if (first is String) {
       if (first.startsWith('http')) return first;
-      // Agar "/dacha/" bilan boshlansa, "/images/dacha/" ga almashtiramiz
       if (first.startsWith('/dacha/')) {
         return '$domain/images/dacha${first.substring(6)}';
       }
@@ -63,6 +63,34 @@ class ListingCardProfile extends StatelessWidget {
       return addressOptions[index - 1];
     }
     return "Noma'lum joy";
+  }
+
+  // Qulayliklarni faqat borlarini chiqarish uchun widget
+  Widget buildFacilitiesChips(
+      DachaModel dacha, List<Map<String, dynamic>> availableFacilities) {
+    final dachaFacilities =
+        dacha.facilities?.map((e) => e.toString()).toSet() ?? {};
+
+    final chips = availableFacilities
+        .where(
+            (facility) => dachaFacilities.contains(facility['id'].toString()))
+        .map((facility) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Chip(
+                label: Text(facility['name'] ?? ''),
+                backgroundColor: Colors.blue.shade50,
+                labelStyle: const TextStyle(color: Colors.black),
+              ),
+            ))
+        .toList();
+
+    if (chips.isEmpty) {
+      return const Text("Qulayliklar yo'q");
+    }
+
+    return Wrap(
+      children: chips,
+    );
   }
 
   @override
@@ -118,6 +146,7 @@ class ListingCardProfile extends StatelessWidget {
                       },
                     ),
                   ),
+                  // Dacha nomi badge chap yuqorida
                   Positioned(
                     top: 10,
                     left: 10,
@@ -138,6 +167,7 @@ class ListingCardProfile extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // "Bo'sh"/"Band" badge o'ng yuqorida
                   Positioned(
                     top: 10,
                     right: 10,
@@ -160,21 +190,72 @@ class ListingCardProfile extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(
-                "\$${dacha.price ?? 0}/sutka",
-                style: const TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                getPopularPlaceName(dacha.popularPlace, addressOptions),
-                style: const TextStyle(fontSize: 16, color: Colors.black),
+              // Narx va joy badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "\$${dacha.price ?? 0}/sutka",
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      getPopularPlaceName(dacha.popularPlace, addressOptions),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const Gap(12),
-              Text(
-                getClientTypeName(dacha.clientType),
-                style: const TextStyle(fontSize: 16),
+              // Client type badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  getClientTypeName(dacha.clientType),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
+              const Gap(12),
+
+              Row(
+                children: [
+                  RatingBar.builder(
+                    minRating: 1,
+                    direction: Axis.horizontal,
+                    ignoreGestures: true,
+                    itemCount: 5,
+                    itemSize: 22,
+                    itemBuilder: (context, _) => const Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                    ),
+                    onRatingUpdate: (double value) {},
+                  ),
+                  const Gap(8),
+                  const Text('4.5K'),
+                ],
+              ),
+              const Gap(12),
+              // Yotoq va zal soni
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Row(

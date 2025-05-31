@@ -6,10 +6,6 @@ class InfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 6, 8, 19),
-      ),
-      backgroundColor: Color.fromARGB(255, 6, 8, 19),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -20,7 +16,7 @@ class InfoPage extends StatelessWidget {
             Text(
               "Guruhlar chiqishi uchun telegramga ulaning!",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20, color: Colors.white),
+              style: TextStyle(fontSize: 20, color: Colors.black),
             ),
             const Gap(40),
             Padding(

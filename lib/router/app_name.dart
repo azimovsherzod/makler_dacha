@@ -14,9 +14,6 @@ sealed class AppRoutes {
       case Routes.homePage:
         return CupertinoPageRoute(
             builder: (context) => HomePage(), settings: settings);
-      case Routes.main:
-        return CupertinoPageRoute(
-            builder: (context) => const MainPage(), settings: settings);
       case Routes.splash:
         return CupertinoPageRoute(
             builder: (context) => const SplashPage(), settings: settings);
@@ -48,7 +45,10 @@ sealed class AppRoutes {
             }
             print(
                 "Card tapped: ${dacha.name}"); // dacha.name qiymatini chop etish
-            return ProfileDetail(dacha: dacha);
+            return ProfileDetail(
+              dacha: dacha,
+              profileProvider: ProfileProvider(),
+            );
           },
           settings: settings,
         );

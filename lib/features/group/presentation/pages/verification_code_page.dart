@@ -57,9 +57,14 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
   Widget build(BuildContext context) {
     final phoneNumber = Get.arguments!['phone_number'];
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 6, 8, 19),
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 6, 8, 19),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(16, 100, 16, 0),
@@ -67,7 +72,10 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
           children: [
             const Text(
               "Verification Code",
-              style: TextStyle(fontSize: 22, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 22,
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             const Text(
@@ -77,7 +85,10 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(phoneNumber, style: const TextStyle(color: Colors.white)),
+                Text(phoneNumber,
+                    style: const TextStyle(
+                      color: AppColors.primaryColor,
+                    )),
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context);
@@ -107,11 +118,16 @@ class _VerificationCodePageState extends State<VerificationCodePage> {
                         FilteringTextInputFormatter.digitsOnly,
                       ],
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                      style: const TextStyle(
+                        color: Colors.black, // <-- mana shu rangni qora qiling!
+                        fontSize: 18,
+                      ),
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.white),
+                          borderSide: const BorderSide(
+                            color: AppColors.primaryColor,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),

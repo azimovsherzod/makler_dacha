@@ -62,7 +62,7 @@ class OnBoardingPage extends StatelessWidget {
             text: 'Boshlash'.tr,
             textStyle: const TextStyle(fontSize: 17, color: Colors.white),
             onPressed: () {
-              Get.offAllNamed(Routes.main);
+              Get.offAllNamed(Routes.homePage);
             }),
       ),
     );

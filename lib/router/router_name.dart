@@ -1,7 +1,7 @@
 sealed class Routes {
   Routes._();
   static const String onBoarding = '/on-boarding';
-  static const String main = '/main';
+
   static const String homePage = '/home-page';
   static const String rating = '/rating';
   static const String splash = '/splash';

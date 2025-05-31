@@ -43,7 +43,7 @@ export '../features/chat/presentation/widgets/date_widget.dart';
 export '../features/chat/presentation/widgets/message_widget.dart';
 export '../features/chat/presentation/pages/chat_page.dart';
 export '../features/home/presentation/pages/filter_page.dart';
-export '../features/home/presentation/pages/main_page.dart';
+
 export '../features/home/presentation/pages/image_viewer_page.dart';
 export '../features/home/presentation/pages/listing_detail_page.dart';
 export '../features/splash/presentation/splash_page.dart';

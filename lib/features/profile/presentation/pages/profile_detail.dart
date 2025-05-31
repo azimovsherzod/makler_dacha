@@ -1,10 +1,11 @@
 import '../../../../constans/imports.dart';
 
-final profileProvider = ProfileProvider();
-
 class ProfileDetail extends StatelessWidget {
   final DachaModel dacha;
-  const ProfileDetail({Key? key, required this.dacha}) : super(key: key);
+  final ProfileProvider profileProvider;
+  const ProfileDetail(
+      {Key? key, required this.dacha, required this.profileProvider})
+      : super(key: key);
 
   String getClientTypeName(dynamic id) {
     final clientType = profileProvider.availableClientTypes.firstWhere(
@@ -14,6 +15,47 @@ class ProfileDetail extends StatelessWidget {
     return clientType['name'] as String? ?? "Noma'lum tur";
   }
 
+  String getPopularPlaceName(dynamic id, List<String> addressOptions) {
+    int? index;
+    if (id == null) return "Noma'lum joy";
+    if (id is int) {
+      index = id;
+    } else if (id is String) {
+      index = int.tryParse(id);
+    }
+    if (index != null && index > 0 && index <= addressOptions.length) {
+      return addressOptions[index - 1];
+    }
+    return "Noma'lum joy";
+  }
+
+  Widget buildFacilitiesChips(
+      DachaModel dacha, List<Map<String, dynamic>> availableFacilities) {
+    final dachaFacilities =
+        dacha.facilities?.map((e) => e.toString()).toSet() ?? {};
+
+    final chips = availableFacilities
+        .where(
+            (facility) => dachaFacilities.contains(facility['id'].toString()))
+        .map((facility) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Chip(
+                label: Text(facility['name'] ?? ''),
+                backgroundColor: Colors.blue.shade50,
+                labelStyle: const TextStyle(color: Colors.black),
+              ),
+            ))
+        .toList();
+
+    if (chips.isEmpty) {
+      return const Text("Qulayliklar yo'q");
+    }
+
+    return Wrap(
+      children: chips,
+    );
+  }
+
   String getImageUrl(dynamic images) {
     if (images == null || images.isEmpty) {
       return 'https://avatars.mds.yandex.net/i?id=b4801a50e1801125b3173ade9c4a6ffb_l-4948104-images-thumbs&n=13';
@@ -21,7 +63,6 @@ class ProfileDetail extends StatelessWidget {
     final first = images.first;
     if (first is String) {
       if (first.startsWith('http')) return first;
-      // Agar "/dacha/" bilan boshlansa, "/images/dacha/" ga almashtiramiz
       if (first.startsWith('/dacha/')) {
         return '$domain/images/dacha${first.substring(6)}';
       }
@@ -49,6 +90,22 @@ class ProfileDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final imagePath = getImageUrl(dacha.images);
+    final addressOptions = profileProvider.availablePopularPlaces
+            ?.map((e) => e['name'] as String)
+            .toList() ??
+        [];
+
+    // Ma'lumotlar yuklanmagan bo'lsa, loading ko'rsatish
+    if (profileProvider.availableClientTypes.isEmpty ||
+        profileProvider.availableFacilities.isEmpty ||
+        profileProvider.availablePopularPlaces == null ||
+        addressOptions.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -84,14 +141,13 @@ class ProfileDetail extends StatelessWidget {
                             print("❌ Dacha ID null!");
                             return;
                           }
-
                           final success =
                               await profileProvider.deleteDacha(dacha.id!);
                           if (success) {
-                            Navigator.pop(context); // Dialogni yopish
-                            Navigator.pop(context); // Sahifadan chiqish
+                            Navigator.pop(context);
+                            Navigator.pop(context);
                           } else {
-                            Navigator.pop(context); // Dialogni yopish
+                            Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
@@ -115,91 +171,149 @@ class ProfileDetail extends StatelessWidget {
         padding: const EdgeInsets.all(12.0),
         child: ListView(
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.network(
-                imagePath,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.error, size: 50, color: Colors.red);
-                },
-              ),
+            // Rasm, nomi, "Bo'sh"/"Band" badge
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(15),
+                  child: Image.network(
+                    imagePath,
+                    height: 200,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.error,
+                          size: 50, color: Colors.red);
+                    },
+                  ),
+                ),
+                // Dacha nomi badge chap yuqorida
+                Positioned(
+                  top: 10,
+                  left: 10,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      dacha.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: dacha.isActive ? Colors.green : Colors.red,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      dacha.isActive ? "Bo'sh" : "Band",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const Gap(12),
+            // Narx va joy badge
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: const [
-                    Icon(Icons.star, color: Colors.yellow),
-                    Icon(Icons.star, color: Colors.yellow),
-                    Icon(Icons.star, color: Colors.yellow),
-                    Icon(Icons.star, color: Colors.yellow),
-                    Icon(Icons.star, color: Colors.yellow),
-                    Gap(8),
-                    Text('4.5K'),
-                  ],
+                Text(
+                  "\$${dacha.price ?? 0}/sutka",
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                const Gap(12),
                 Container(
-                  padding: const EdgeInsets.fromLTRB(8, 10, 8, 0),
-                  width: 100,
-                  height: 40,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
                     color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    getClientTypeName(dacha.clientType),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white),
+                    getPopularPlaceName(dacha.popularPlace, addressOptions),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
             const Gap(12),
-            Padding(
-              padding: const EdgeInsets.only(left: 240.0),
-              child: TextButton(
-                onPressed: () {
-                  Get.toNamed(Routes.commentsPages);
-                },
-                child: const Text("Hammasini ko'rish"),
+            // Client type badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                getClientTypeName(dacha.clientType),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const Gap(12),
-            const CommentsWidget(),
+            // Qulayliklar chipslari
+            buildFacilitiesChips(dacha, profileProvider.availableFacilities),
             const Gap(12),
+            // Yulduzcha reyting va boshqa info
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Billiard', style: TextStyle(fontSize: 20)),
-                Switch(
-                  activeTrackColor: AppColors.primaryColor,
-                  activeColor: Colors.white,
-                  inactiveThumbColor: Colors.black,
-                  inactiveTrackColor: Colors.white,
-                  value: true,
-                  onChanged: (_) {},
+                RatingBar.builder(
+                  minRating: 1,
+                  direction: Axis.horizontal,
+                  ignoreGestures: true,
+                  itemCount: 5,
+                  itemSize: 22,
+                  itemBuilder: (context, _) => const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                  ),
+                  onRatingUpdate: (double value) {},
                 ),
+                const Gap(8),
+                const Text('4.5K'),
               ],
             ),
             const Gap(12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Karaoke', style: TextStyle(fontSize: 20)),
-                Switch(
-                  activeTrackColor: AppColors.primaryColor,
-                  activeColor: Colors.white,
-                  inactiveThumbColor: Colors.black,
-                  inactiveTrackColor: Colors.white,
-                  value: true,
-                  onChanged: (_) {},
-                ),
-              ],
+            // Yotoq, zal, вес va кол-во badge'lari
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  InfoIconWithText(
+                    icon: LocalIcons.bed,
+                    text: "${dacha.bedsCount ?? 0}",
+                  ),
+                  InfoIconWithText(
+                    icon: LocalIcons.bath,
+                    text: "${dacha.hallCount ?? 0}",
+                  ),
+                ],
+              ),
             ),
             const Gap(12),
             Padding(
