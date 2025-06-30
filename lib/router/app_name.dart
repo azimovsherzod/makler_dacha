@@ -47,7 +47,6 @@ sealed class AppRoutes {
                 "Card tapped: ${dacha.name}"); // dacha.name qiymatini chop etish
             return ProfileDetail(
               dacha: dacha,
-              profileProvider: ProfileProvider(),
             );
           },
           settings: settings,
@@ -57,7 +56,11 @@ sealed class AppRoutes {
             builder: (context) => const ImageViewerPage(), settings: settings);
       case Routes.commentsPages:
         return CupertinoPageRoute(
-            builder: (context) => const CommentsPage(), settings: settings);
+            builder: (context) {
+              final dacha = settings.arguments as DachaModel;
+              return CommentsPage(dacha: dacha);
+            },
+            settings: settings);
       case Routes.notificationPage:
         return CupertinoPageRoute(
             builder: (context) => const NotificationPage(), settings: settings);
@@ -114,6 +117,12 @@ sealed class AppRoutes {
       case Routes.verificationCodePage:
         return CupertinoPageRoute(
             builder: (context) => VerificationCodePage(), settings: settings);
+      case Routes.noInternetPage:
+        return CupertinoPageRoute(
+            builder: (context) => NoInternetPage(), settings: settings);
+      case Routes.createDachaPage:
+        return CupertinoPageRoute(
+            builder: (context) => CreateDachaPage(), settings: settings);
       case Routes.filter:
         final city = settings.arguments as String? ?? 'Unknown';
         return CupertinoPageRoute(builder: (context) => FilterPage(city: city));

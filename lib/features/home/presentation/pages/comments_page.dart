@@ -1,7 +1,8 @@
 import '../../../../constans/imports.dart';
 
 class CommentsPage extends StatelessWidget {
-  const CommentsPage({super.key});
+  final DachaModel dacha;
+  const CommentsPage({super.key, required this.dacha});
 
   @override
   Widget build(BuildContext context) {
@@ -11,25 +12,29 @@ class CommentsPage extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: ListView(
-              padding: EdgeInsets.only(bottom: 80),
-              children: const [
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-                Gap(12),
-                CommentsWidget(),
-              ],
+            child: Consumer<ProfileProvider>(
+              builder: (context, provider, child) {
+                print('dacha.id: ${dacha.id}');
+                print(
+                    'COMMENTS: ${provider.comments.map((e) => e.dacha).toList()}');
+                final comments = provider.comments
+                    .where((c) => c.dacha == dacha.id.toString())
+                    .toList();
+                print('FILTERED: $comments');
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final comment = comments[index];
+
+                    return Padding(
+                      padding: const EdgeInsets.all(7.0),
+                      child: CommentsWidget(comment: comment),
+                    );
+                  },
+                );
+              },
             ),
           ),
           Align(
@@ -37,7 +42,8 @@ class CommentsPage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12.0),
               color: Colors.white,
-              child: SearchWidget(),
+              child: SearchWidget(
+                  dachaId: dacha.id.toString()), // <-- dachaId ni uzating
             ),
           ),
         ],

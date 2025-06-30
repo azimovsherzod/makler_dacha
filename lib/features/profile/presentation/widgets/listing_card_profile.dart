@@ -65,7 +65,6 @@ class ListingCardProfile extends StatelessWidget {
     return "Noma'lum joy";
   }
 
-  // Qulayliklarni faqat borlarini chiqarish uchun widget
   Widget buildFacilitiesChips(
       DachaModel dacha, List<Map<String, dynamic>> availableFacilities) {
     final dachaFacilities =

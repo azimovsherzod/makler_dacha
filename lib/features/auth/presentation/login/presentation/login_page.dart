@@ -15,7 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 6, 8, 19),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
           alignment: Alignment.center,
@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 50),
               const Text(
                 "Login",
-                style: TextStyle(fontSize: 24, color: Colors.white),
+                style: TextStyle(fontSize: 24, color: AppColors.primaryColor),
               ),
               const Gap(40),
               Form(
@@ -42,21 +42,21 @@ class _LoginPageState extends State<LoginPage> {
                         LengthLimitingTextInputFormatter(9),
                         PhoneNumberInputFormatter(),
                       ],
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         labelText: "Phone Number",
                         prefixText: '+998 ',
                         prefixStyle: const TextStyle(
                           fontSize: 17,
-                          color: Colors.white,
+                          color: Colors.black,
                           fontWeight: FontWeight.bold,
                         ),
-                        labelStyle: const TextStyle(color: Colors.white),
+                        labelStyle: const TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: Colors.white, width: 2.0),
+                              const BorderSide(color: Colors.black, width: 2.0),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
@@ -88,15 +88,15 @@ class _LoginPageState extends State<LoginPage> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.black),
                       decoration: InputDecoration(
                         labelText: "Password",
-                        labelStyle: const TextStyle(color: Colors.white),
+                        labelStyle: const TextStyle(color: Colors.black),
                         border: OutlineInputBorder(),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                           borderSide:
-                              const BorderSide(color: Colors.white, width: 2.0),
+                              const BorderSide(color: Colors.black, width: 2.0),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
@@ -158,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const Text(
                     "Don't have an account?",
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.black),
                   ),
                   TextButton(
                     onPressed: () {

@@ -32,7 +32,7 @@ class ChatPage extends StatelessWidget {
               isSentByUser: true,
             ),
             const Spacer(),
-            const SearchWidget(),
+            const SearchWidget(dachaId: ''),
             const Gap(12),
           ],
         ),

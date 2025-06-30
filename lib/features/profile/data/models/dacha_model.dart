@@ -107,7 +107,6 @@ class DachaModel extends Equatable {
       'client_type': clientType,
       // 'address': address,
       'property_type': propertyType.isEmpty ? 'dacha' : propertyType,
-      // Rasm faqat yo‘li bo‘lsa:
       'images': images.map((e) {
         if (e is Map && e.containsKey('image')) {
           return e['image'];

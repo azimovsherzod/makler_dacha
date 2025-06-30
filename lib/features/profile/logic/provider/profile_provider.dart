@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import '../../../../constans/imports.dart';
 
 class ProfileProvider extends ChangeNotifier {
@@ -15,6 +14,8 @@ class ProfileProvider extends ChangeNotifier {
 
   ProfileModel? profile;
   List<DachaModel> dachas = [];
+  List<DachaModel> profileDacha = [];
+  List<CommentsModel> comments = [];
   List<Map<String, dynamic>> availableFacilities = [];
   List<String> availableRegions = [];
   List<String> availableDistricts = [];
@@ -53,8 +54,13 @@ class ProfileProvider extends ChangeNotifier {
       loadProfile();
       loadDachas();
 
+      // TOKENNI TEKSHIRISH VA YANGILASH
+      if (!await isTokenValid()) {
+        await refreshToken();
+      }
+
       final response = await dio.get(
-        '/users/',
+        '/me/',
         options: Options(
           headers: {
             'Authorization':
@@ -62,6 +68,7 @@ class ProfileProvider extends ChangeNotifier {
           },
         ),
       );
+      print("📡 Profilni olish uchun so'rov yuborildi: ${response}");
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -129,40 +136,18 @@ class ProfileProvider extends ChangeNotifier {
     final token = Hive.box('profileBox').get('access_token');
     if (token == null) {
       print("⚠️ Token mavjud emas!");
-      Get.snackbar(
-        "Xatolik",
-        "Token mavjud emas!",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       return false;
     }
     try {
       final decoded = decodeToken(token);
       final expiry = DateTime.fromMillisecondsSinceEpoch(decoded['exp'] * 1000);
-      print("🔍 Token amal qilish muddati: $expiry");
       if (DateTime.now().isAfter(expiry)) {
         print("⚠️ Tokenning amal qilish muddati tugagan!");
-        Get.snackbar(
-          "Xatolik",
-          "Tokenning amal qilish muddati tugagan!",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
         return false;
       }
       return true;
     } catch (e) {
       print("❌ Tokenni tekshirishda xatolik: $e");
-      Get.snackbar(
-        "Xatolik",
-        "Tokenni tekshirishda xatolik: $e",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
       return false;
     }
   }
@@ -256,6 +241,11 @@ class ProfileProvider extends ChangeNotifier {
   /// Dacha yaratish: multipart bilan bir nechta rasm yuborish
   Future<void> addDacha(BuildContext context, DachaModel dacha) async {
     try {
+      // TOKENNI TEKSHIRISH VA YANGILASH
+      if (!await isTokenValid()) {
+        await refreshToken();
+      }
+
       final token = Hive.box('profileBox').get('access_token');
 
       FormData formData = FormData.fromMap({
@@ -270,12 +260,13 @@ class ProfileProvider extends ChangeNotifier {
         'popular_place': dacha.popularPlace,
         'client_type': dacha.clientType,
         'property_type': dacha.propertyType,
+        'is_active': dacha.isActive,
+        'user': dacha.user,
         'uploaded_images': [
           for (var imgPath in dacha.images)
             await MultipartFile.fromFile(imgPath,
                 filename: imgPath.split('/').last),
         ],
-        // boshqa maydonlar bo‘lsa, qo‘shing
       });
 
       final response = await dio.post(
@@ -322,8 +313,42 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> profileDachas() async {
+    try {
+      // TOKENNI TEKSHIRISH VA YANGILASH
+      if (!await isTokenValid()) {
+        await refreshToken();
+      }
+
+      final token = Hive.box('profileBox').get('access_token');
+      final response = await dio.get(
+        '/user_dachas/',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data;
+        profileDacha.clear();
+        profileDacha
+            .addAll(data.map((json) => DachaModel.fromJson(json)).toList());
+        notifyListeners();
+        print("✅ Foydalanuvchi dachalari yuklandi: ${profileDacha.length} ta");
+      }
+    } catch (e) {
+      print("❌ profileDachas funksiyasida xatolik: $e");
+    }
+  }
+
   Future<void> fetchDachas() async {
     try {
+      // TOKENNI TEKSHIRISH VA YANGILASH
+      if (!await isTokenValid()) {
+        await refreshToken();
+      }
+
       final response = await dio.get(
         '/dachas/',
         options: Options(
@@ -529,12 +554,16 @@ class ProfileProvider extends ChangeNotifier {
   Future<void> logout() async {
     try {
       print("📤 Foydalanuvchi chiqmoqda...");
-      final profileBox = Hive.box('profileBox');
-      final dachaBox = Hive.box('dachaBox');
-      await profileBox.clear();
-      await dachaBox.clear();
       profile = null;
       dachas.clear();
+
+      // Hive boxdagi login flag va tokenlarni tozalash
+      final box = Hive.box('profileBox');
+      box.put('isLoggedIn', false); // <-- MUHIM!
+      box.delete('access_token');
+      box.delete('refresh_token');
+      box.delete('user_id');
+
       notifyListeners();
       print("✅ Foydalanuvchi muvaffaqiyatli chiqdi.");
       Get.snackbar(
@@ -544,6 +573,8 @@ class ProfileProvider extends ChangeNotifier {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
+      // Logoutdan so‘ng login/register sahifaga yo‘naltirish
+      Get.offAllNamed(Routes.registerPage);
     } catch (e) {
       print("❌ Logoutda xatolik: $e");
       Get.snackbar(
@@ -576,7 +607,9 @@ class ProfileProvider extends ChangeNotifier {
   void saveProfile(ProfileModel profile) {
     try {
       final box = Hive.box('profileBox');
-      box.put('profile', profile.toJson());
+      // Masalan, username orqali
+      box.put('profile_${profile.name}', profile.toJson());
+      box.put('last_user_id', profile.name);
       print("✅ Profil saqlandi: ${profile.toJson()}");
     } catch (e) {
       print("❌ Profilni saqlashda xatolik: $e");
@@ -587,6 +620,73 @@ class ProfileProvider extends ChangeNotifier {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+    }
+  }
+
+  Future<void> updateDacha(BuildContext context, DachaModel dacha) async {
+    try {
+      final token = Hive.box('profileBox').get('access_token');
+
+      // Faqat yangi (local) rasmlarni fayl sifatida yuboramiz
+      final List<String> newImages = (dacha.images ?? [])
+          .where((img) => !img.startsWith('/'))
+          .toList()
+          .cast<String>();
+      // Eski (serverdagi) rasmlarni alohida yuboramiz (agar backend qabul qilsa)
+      final List<String> existingImages = (dacha.images ?? [])
+          .where((img) => img.startsWith('/'))
+          .toList()
+          .cast<String>();
+
+      FormData formData = FormData.fromMap({
+        'name': dacha.name,
+        'price': dacha.price,
+        'description': dacha.description,
+        'phone': dacha.phone.toString(),
+        'hall_count': dacha.hallCount,
+        'beds_count': dacha.bedsCount,
+        'transaction_type': dacha.transactionType,
+        'facilities': dacha.facilities,
+        'popular_place': dacha.popularPlace,
+        'client_type': dacha.clientType,
+        'property_type': dacha.propertyType,
+        'is_active': dacha.isActive,
+        'user': dacha.user,
+        // Eski rasmlar (yo‘llar) backend qabul qilsa
+        'existing_images': existingImages,
+        // Faqat yangi tanlangan rasmlar fayl sifatida
+        'uploaded_images': [
+          for (var imgPath in newImages)
+            await MultipartFile.fromFile(imgPath,
+                filename: imgPath.split('/').last),
+        ],
+      });
+
+      final response = await dio.patch(
+        '/dachas/${dacha.id}/',
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        print("✅ Dacha yangilandi: ${response.data}");
+        Get.snackbar("Muvaffaqiyatli", "Dacha yangilandi!",
+            backgroundColor: Colors.green);
+        await fetchDachas();
+        Navigator.pop(context);
+      } else {
+        print("❌ Xatolik: ${response.data}");
+        Get.snackbar("Xatolik", 'Xatolik: ${response.data}',
+            backgroundColor: Colors.red);
+      }
+    } catch (e) {
+      print("❌ updateDacha funksiyasida xatolik: $e");
+      Get.snackbar("Xatolik", 'Error: $e', backgroundColor: Colors.red);
     }
   }
 
@@ -602,6 +702,136 @@ class ProfileProvider extends ChangeNotifier {
       backgroundColor: Colors.green,
       colorText: Colors.white,
     );
+  }
+
+  Future<void> sendDachaRating({
+    required int dachaId,
+    required int rating,
+    required int userId,
+  }) async {
+    try {
+      final token = Hive.box('profileBox').get('access_token');
+
+      print(
+          "Yuborilayotgan so‘rov: dacha: $dachaId, rating: $rating, user: $userId, token: $token");
+      final response = await dio.post(
+        '/dacha_ratings/',
+        data: {
+          'rating': rating,
+          'dacha': dachaId,
+          'user': userId,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      print("Javob: ${response.statusCode} ${response.data}");
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        print("✅ Reyting yuborildi: ${response.data}");
+        Get.snackbar(
+          "Muvaffaqiyatli",
+          "Reyting yuborildi!",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        print("❌ Reyting yuborishda xatolik: ${response.data}");
+        Get.snackbar(
+          "Xatolik",
+          "Reyting yuborishda xatolik: ${response.data}",
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print("❌ Backend javobi: ${e.response?.data}");
+      }
+      print("❌ sendDachaRating funksiyasida xatolik: $e");
+      Get.snackbar(
+        "Xatolik",
+        "Reyting yuborishda xatolik: $e",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> sendDachaComment({
+    required int dachaId,
+    required String comment,
+    required int userId,
+  }) async {
+    try {
+      final token = Hive.box('profileBox').get('access_token');
+
+      print(
+          "Yuborilayotgan komment: dacha: $dachaId, comment: $comment, user: $userId, token: $token");
+      if (userId == null) {
+        Get.snackbar(
+            "Xatolik", "Foydalanuvchi ID topilmadi. Qayta login qiling.",
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return;
+      }
+      final response = await dio.post(
+        '/dacha_comments/',
+        data: {
+          'comment': comment,
+          'dacha': dachaId,
+          'user': userId,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      print("Komment javobi: ${response.statusCode} ${response.data}");
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        Get.snackbar(
+          "Muvaffaqiyatli",
+          "Komment yuborildi!",
+        );
+        await fetchComments();
+        notifyListeners();
+      } else {
+        Get.snackbar("Xatolik", "Komment yuborilmadi!",
+            backgroundColor: Colors.red, colorText: Colors.white);
+      }
+    } catch (e) {
+      if (e is DioException && e.response != null) {
+        print("❌ Backend javobi: ${e.response?.data}");
+      }
+      print("❌ sendDachaComment funksiyasida xatolik: $e");
+      Get.snackbar("Xatolik", "Komment yuborishda xatolik: $e",
+          backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  Future<void> fetchComments() async {
+    final token = Hive.box('profileBox').get('access_token');
+    final response = await dio.get(
+      '/dacha_comments/',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+    if (response.statusCode == 200) {
+      comments = (response.data as List)
+          .map((e) => CommentsModel.fromJson(e))
+          .toList();
+      notifyListeners();
+    }
   }
 
   Future<bool> deleteDacha(int dachaId) async {
@@ -672,46 +902,28 @@ class ProfileProvider extends ChangeNotifier {
   }
 
   void loadProfile() {
-    try {
-      final box = Hive.box('profileBox');
-      final savedProfile = box.get('profile');
-      if (savedProfile != null) {
-        profile =
-            ProfileModel.fromJson(Map<String, dynamic>.from(savedProfile));
-        print("✅ Profil yuklandi: ${profile?.toJson()}");
-      } else {
-        print("⚠️ Saqlangan profil topilmadi. Bo'sh profil o'rnatilmoqda...");
-        profile = ProfileModel(
-          name: '',
-          surname: '',
-          phone: '',
-          dachas: [],
-        );
-      }
-    } catch (e) {
-      print("❌ Profilni yuklashda xatolik: $e");
-      Get.snackbar(
-        "Xatolik",
-        "Profilni yuklashda xatolik: $e",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+    final box = Hive.box('profileBox');
+    final userId = box.get('user_id');
+    final savedProfile = box.get('profile_$userId');
+    if (savedProfile != null) {
+      profile = ProfileModel.fromJson(Map<String, dynamic>.from(savedProfile));
+      notifyListeners();
     }
   }
 
-  void loadDachas() {
+  List<DachaModel> loadDachas() {
     try {
       final box = Hive.box('dachaBox');
       final savedDachas = box.get('dachas', defaultValue: []);
       if (savedDachas != null && savedDachas is List) {
-        dachas = List<DachaModel>.from(
-          savedDachas
-              .map((x) => DachaModel.fromJson(Map<String, dynamic>.from(x))),
-        );
-        print("✅ Dacha ma'lumotlari yuklandi: ${dachas.length} ta");
+        final loadedDachas = savedDachas
+            .map((json) => DachaModel.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+        print("✅ Dacha ma'lumotlari yuklandi: ${loadedDachas.length} ta");
+        return loadedDachas;
       } else {
         print("⚠️ Dacha ma'lumotlari mavjud emas.");
+        return [];
       }
     } catch (e) {
       print("❌ Dacha ma'lumotlarini yuklashda xatolik: $e");
@@ -722,6 +934,7 @@ class ProfileProvider extends ChangeNotifier {
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
+      return [];
     }
   }
 }

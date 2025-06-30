@@ -19,10 +19,15 @@ class _MaklerdachaAppState extends State<MaklerdachaApp> {
   Future<String> getInitialRoute() async {
     final box = Hive.box('profileBox');
     final isLoggedIn = box.get('isLoggedIn', defaultValue: false);
+
     if (isLoggedIn) {
-      return Routes.homePage; // Foydalanuvchi tizimga kirgan bo'lsa
+      // Refresh token ishlatamiz
+      final profileProvider = ProfileProvider();
+      await profileProvider.refreshToken();
+      await profileProvider.fetchAllData();
+      return Routes.homePage;
     } else {
-      return Routes.registerPage; // Foydalanuvchi tizimga kirmagan bo'lsa
+      return Routes.registerPage;
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import '../../../../constans/imports.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -8,18 +10,16 @@ class AuthProvider extends ChangeNotifier {
         'password': password,
       });
 
-      if (response != null && response['access'] != null) {
-        final box = Hive.box('profileBox');
-        box.put('access_token', response['access']); // To'g'ri maydon nomi
-        box.put('refresh_token', response['refresh']); // To'g'ri maydon nomi
-        print("✅ Tokenlar saqlandi: ${response['access']}");
-
-        // Token orqali user_id ni saqlash
-        await ApiService().saveUserIdFromToken();
-
+      if (response != null &&
+          response['access'] != null &&
+          response['refresh'] != null) {
+        Hive.box('profileBox').put('access_token', response['access']);
+        Hive.box('profileBox')
+            .put('refresh_token', response['refresh']); // <-- MUHIM!
+        Hive.box('profileBox').put('isLoggedIn', true);
         return true;
       } else {
-        print("❌ Login xatosi: ${response['detail'] ?? 'Noma\'lum xato'}");
+        print("❌ Login xatosi: ${response?['detail'] ?? 'Noma\'lum xato'}");
         return false;
       }
     } catch (e) {
@@ -50,10 +50,24 @@ class AuthProvider extends ChangeNotifier {
       });
 
       dismissLoadingAlert();
-      print("📩 Ответ от сервера: $response"); // Лог ответа сервера
+      print("📩 Ответ от сервера: $response");
 
       if (response != null && response.containsKey('id')) {
-        // ✅ Успешная регистрация
+        final box = Hive.box('profileBox');
+        box.put('profile_${response['id']}', response);
+        box.put('isLoggedIn', true);
+        box.put('user_id', response['id']);
+
+        // Yangi foydalanuvchi uchun access va refresh token ham saqlansin!
+        if (response.containsKey('access')) {
+          box.put('access_token', response['access']);
+        }
+        if (response.containsKey('refresh')) {
+          box.put('refresh_token', response['refresh']);
+        }
+
+        print("✅ Profil va tokenlar saqlandi: $response");
+
         Get.snackbar('✅ Успех', 'Регистрация прошла успешно!',
             backgroundColor: Colors.green);
         Get.offAndToNamed(Routes.homePage);
@@ -94,4 +108,12 @@ class AuthProvider extends ChangeNotifier {
       },
     );
   }
+}
+
+// JWT tokenni decode qilish uchun yordamchi funksiya
+Map<String, dynamic> decodeToken(String token) {
+  final parts = token.split('.');
+  if (parts.length != 3) throw Exception('Invalid token');
+  final payload = utf8.decode(base64Url.decode(base64Url.normalize(parts[1])));
+  return json.decode(payload) as Map<String, dynamic>;
 }

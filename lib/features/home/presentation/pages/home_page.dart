@@ -61,6 +61,7 @@ class HomeContentPage extends StatefulWidget {
 
 class _HomeContentPageState extends State<HomeContentPage> {
   final RefreshController _refreshController = RefreshController();
+  String? selectedPopularPlace;
 
   @override
   void initState() {
@@ -106,6 +107,11 @@ class _HomeContentPageState extends State<HomeContentPage> {
     return SmartRefresher(
       controller: _refreshController,
       onRefresh: () async {
+        final profileProvider =
+            Provider.of<ProfileProvider>(context, listen: false);
+        if (!await profileProvider.isTokenValid()) {
+          await profileProvider.refreshToken();
+        }
         await profileProvider.fetchAllData();
         _refreshController.refreshCompleted();
       },
@@ -117,9 +123,16 @@ class _HomeContentPageState extends State<HomeContentPage> {
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
           HeaderWidget(
-            selectedCity: 'Toshkent',
-            cities: ['Toshkent', 'Chirchiq', 'Xojakent', 'Qoronqul'],
-            onCityChanged: (newCity) {},
+            popularPlaces: profileProvider.availablePopularPlaces
+                    ?.map((e) => e['name'] as String)
+                    .toList() ??
+                [],
+            selectedPopularPlace: selectedPopularPlace,
+            onPopularPlaceChanged: (place) {
+              setState(() {
+                selectedPopularPlace = place;
+              });
+            },
           ),
           const Gap(12),
           const CustomSearchContainer(),
@@ -131,6 +144,11 @@ class _HomeContentPageState extends State<HomeContentPage> {
               style: TextStyle(fontSize: 20),
             ),
           ),
+          // AppButton(
+          //     text: "asdas",
+          //     onPressed: () {
+          //       profileProvider.logout();
+          //     }),
           const Gap(8),
           (profileProvider.dachas.isEmpty ||
                   profileProvider.availablePopularPlaces == null)

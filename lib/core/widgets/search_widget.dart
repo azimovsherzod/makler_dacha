@@ -1,19 +1,41 @@
-import '../../constans/imports.dart';
+import 'package:makler_dacha/constans/imports.dart';
 
-class SearchWidget extends StatelessWidget {
-  const SearchWidget({super.key});
+class SearchWidget extends StatefulWidget {
+  final String dachaId;
+  const SearchWidget({Key? key, required this.dachaId}) : super(key: key);
+
+  @override
+  _SearchWidgetState createState() => _SearchWidgetState();
+}
+
+class _SearchWidgetState extends State<SearchWidget> {
+  final TextEditingController _controller = TextEditingController();
+
+  void _sendComment() async {
+    final text = _controller.text.trim();
+    if (text.isNotEmpty) {
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
+      await profileProvider.sendDachaComment(
+        dachaId: int.parse(widget.dachaId),
+        comment: text,
+        userId: profileProvider.profile?.id ?? 0, // id int bo‘lsa
+      );
+      _controller.clear(); // TextField bo‘shatish
+      FocusScope.of(context).unfocus(); // Klaviaturani yopish
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SvgPicture.asset(LocalIcons.staple),
-        const Gap(15),
         Expanded(
           child: Padding(
             padding: const EdgeInsets.only(top: 15),
             child: TextField(
+              controller: _controller,
               maxLength: 150,
               decoration: InputDecoration(
                 focusedBorder: OutlineInputBorder(
@@ -28,44 +50,13 @@ class SearchWidget extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   borderSide: const BorderSide(color: Colors.grey, width: 1.0),
                 ),
-                suffixIcon: Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: SvgPicture.asset(
-                    LocalIcons.sticers,
-                    fit: BoxFit.scaleDown,
-                  ),
-                ),
                 contentPadding: const EdgeInsets.all(12),
               ),
             ),
           ),
         ),
         IconButton(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                content: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: const Rating(),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 12.0),
-                    child: AppButton(
-                      text: "Yuborish",
-                      width: 300,
-                      height: 50,
-                      color: AppColors.primaryColor,
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
+          onPressed: _sendComment,
           icon: const Icon(
             Icons.send,
             color: AppColors.primaryColor,

@@ -8,45 +8,21 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  late Box box;
-
   @override
   void initState() {
     super.initState();
 
-    // Box ochilganligini tekshirish va ochish
-    if (!Hive.isBoxOpen('profileBox')) {
-      Hive.openBox('profileBox').then((openedBox) {
-        setState(() {
-          box = openedBox;
-        });
-        print("📦 Данные в box: ${box.get('access_token')}");
-        print("📦 user_id из box: ${box.get('user_id')}");
-        Provider.of<ProfileProvider>(context, listen: false).initProfile();
-      }).catchError((error) {
-        print("❌ Hive box ochishda xatolik: $error");
+    final accessToken = Hive.box('profileBox').get('access_token');
+    if (accessToken != null && accessToken.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ProfileProvider>().initProfile();
+        context.read<ProfileProvider>().profileDachas();
       });
-    } else {
-      box = Hive.box('profileBox');
-      print("📦 Данные в box: ${box.get('access_token')}");
-      print("📦 user_id из box: ${box.get('user_id')}");
-      Provider.of<ProfileProvider>(context, listen: false).initProfile();
     }
-  }
-
-  void _logout() {
-    box.delete('access_token');
-    box.delete('user_id');
-
-    Get.offAllNamed(Routes.loginPage);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!Hive.isBoxOpen('profileBox')) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
     return Scaffold(
       appBar: AppBar(title: const Text("Profile")),
       body: Consumer<ProfileProvider>(
@@ -57,6 +33,13 @@ class _ProfilePageState extends State<ProfilePage> {
           if (profile == null) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          final userDachas = dachas
+              .where((dacha) =>
+                  dacha.user != null &&
+                  profile.id != null &&
+                  dacha.user.toString() == profile.id.toString())
+              .toList();
 
           return ListView(
             padding: const EdgeInsets.all(12.0),
@@ -86,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       IconButton(
                         icon: Icon(Icons.add),
                         onPressed: () {
-                          Get.toNamed(Routes.editPage);
+                          Get.toNamed(Routes.createDachaPage);
                         },
                       ),
                     ],
@@ -95,23 +78,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount:
-                        profileProvider.dachas.length, // Dachalar ro'yxati
+                    itemCount: userDachas.length,
                     itemBuilder: (context, index) {
-                      final dacha = profileProvider.dachas[index];
-                      final addressOptions = profileProvider
-                              .availablePopularPlaces
-                              ?.map((place) {
-                            if (place is Map<String, dynamic> &&
-                                place.containsKey('name') &&
-                                place['name'] is String) {
-                              return place['name'] as String;
-                            } else {
-                              print("❌ Noto'g'ri formatdagi element: $place");
-                              return "Noma'lum joy";
-                            }
-                          }).toList() ??
-                          [];
+                      final dacha = userDachas[index];
+                      final addressOptions =
+                          profileProvider.availablePopularPlaces.map((place) {
+                        if (place is Map<String, dynamic> &&
+                            place.containsKey('name') &&
+                            place['name'] is String) {
+                          return place['name'] as String;
+                        } else {
+                          print("❌ Noto'g'ri formatdagi element: $place");
+                          return "Noma'lum joy";
+                        }
+                      }).toList();
                       return GestureDetector(
                         onTap: () {
                           print("✅ Выбрана дача: ${dacha.toJson()}");
@@ -130,7 +110,11 @@ class _ProfilePageState extends State<ProfilePage> {
               const Gap(12),
               AppButton(
                 text: "Logout",
-                onPressed: _logout,
+                onPressed: () {
+                  profileProvider.logout().then((_) {
+                    Get.offAllNamed(Routes.loginPage);
+                  });
+                },
               ),
             ],
           );

@@ -1,18 +1,16 @@
 import 'dart:io';
-import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:makler_dacha/constans/imports.dart';
+import '../../../../constans/imports.dart';
 
-class EditPage extends StatefulWidget {
-  final DachaModel dacha;
-
-  const EditPage({Key? key, required this.dacha}) : super(key: key);
+class CreateDachaPage extends StatefulWidget {
+  const CreateDachaPage({Key? key}) : super(key: key);
 
   @override
-  _EditPageState createState() => _EditPageState();
+  _CreateDachaPageState createState() => _CreateDachaPageState();
 }
 
-class _EditPageState extends State<EditPage> {
+class _CreateDachaPageState extends State<CreateDachaPage> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController nameController;
@@ -22,87 +20,45 @@ class _EditPageState extends State<EditPage> {
   late TextEditingController hallCountController;
   late TextEditingController bedsCountController;
   late TextEditingController transactionTypeController;
-  late Box<dynamic> box;
   String? selectedViloyat;
   String? selectedTuman;
   int? selectedPopularPlace;
   int? selectedClientTypeId;
   String? selectedPropertyType;
   List<int> selectedFacilities = [];
-  late bool isActive;
+  List<String> images = [];
+  bool isActive = true;
 
   @override
   void initState() {
     super.initState();
-
-    nameController = TextEditingController(text: widget.dacha.name);
-    priceController = TextEditingController(
-        text: widget.dacha.price != null && widget.dacha.price != 0
-            ? widget.dacha.price.toString()
-            : '');
-    descriptionController =
-        TextEditingController(text: widget.dacha.description);
-    phoneController = TextEditingController(text: widget.dacha.phone);
-    hallCountController = TextEditingController(
-        text: widget.dacha.hallCount != null && widget.dacha.hallCount != 0
-            ? widget.dacha.hallCount.toString()
-            : '');
-    bedsCountController = TextEditingController(
-        text: widget.dacha.bedsCount != null && widget.dacha.bedsCount != 0
-            ? widget.dacha.bedsCount.toString()
-            : '');
-    transactionTypeController =
-        TextEditingController(text: widget.dacha.transactionType);
-
-    selectedFacilities = List<int>.from(widget.dacha.facilities ?? []);
-
-    isActive = widget.dacha.isActive;
-
-    selectedPopularPlace =
-        int.tryParse(widget.dacha.popularPlace?.toString() ?? '');
-    selectedClientTypeId = widget.dacha.clientType is int
-        ? widget.dacha.clientType
-        : int.tryParse(widget.dacha.clientType?.toString() ?? '');
-
-    selectedPropertyType = widget.dacha.propertyType;
-
-    if (!Hive.isBoxOpen('profileBox')) {
-      Hive.openBox('profileBox').then((openedBox) {
-        setState(() {
-          box = openedBox;
-        });
-      }).catchError((error) {
-        print("❌ Hive box ochishda xatolik: $error");
-      });
-    } else {
-      box = Hive.box('profileBox');
-    }
-
+    nameController = TextEditingController();
+    priceController = TextEditingController();
+    descriptionController = TextEditingController();
+    phoneController = TextEditingController();
+    hallCountController = TextEditingController();
+    bedsCountController = TextEditingController();
+    transactionTypeController = TextEditingController();
     final profileProvider =
         Provider.of<ProfileProvider>(context, listen: false);
-
     profileProvider.fetchRegions();
     profileProvider.fetchClientTypes();
     profileProvider.fetchFacilities();
   }
 
   Future<void> _pickImages() async {
-    if ((widget.dacha.images?.length ?? 0) >= 3) {
+    if (images.length >= 3) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Siz maksimal 3 ta rasm tanlashingiz mumkin')),
       );
       return;
     }
-
     final pickedImages = await ImagePicker().pickMultiImage();
     if (pickedImages.isNotEmpty) {
       setState(() {
-        widget.dacha.images ??= [];
-        final qoldiq = 3 - widget.dacha.images!.length;
-        widget.dacha.images!.addAll(
-          pickedImages.take(qoldiq).map((e) => e.path),
-        );
+        final qoldiq = 3 - images.length;
+        images.addAll(pickedImages.take(qoldiq).map((e) => e.path));
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,7 +72,7 @@ class _EditPageState extends State<EditPage> {
     final profileProvider = Provider.of<ProfileProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Dachani tahrirlash')),
+      appBar: AppBar(title: const Text('Yangi dacha yaratish')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -267,7 +223,7 @@ class _EditPageState extends State<EditPage> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    ...((widget.dacha.images ?? [])
+                    ...(images
                         .where(
                             (imgPath) => imgPath.isNotEmpty && imgPath != '/')
                         .map((imgPath) => Padding(
@@ -282,24 +238,17 @@ class _EditPageState extends State<EditPage> {
                                           width: 2),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: imgPath.startsWith('/')
-                                        ? Image.network(
-                                            '$domain$imgPath',
-                                            width: 80,
-                                            height: 80,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Image.file(
-                                            File(imgPath),
-                                            width: 80,
-                                            height: 80,
-                                            fit: BoxFit.cover,
-                                          ),
+                                    child: Image.file(
+                                      File(imgPath),
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                   GestureDetector(
                                     onTap: () {
                                       setState(() {
-                                        widget.dacha.images!.remove(imgPath);
+                                        images.remove(imgPath);
                                       });
                                     },
                                     child: Container(
@@ -314,11 +263,7 @@ class _EditPageState extends State<EditPage> {
                                 ],
                               ),
                             ))),
-                    if ((widget.dacha.images
-                                ?.where((img) => img.isNotEmpty && img != '/')
-                                .length ??
-                            0) <
-                        3)
+                    if (images.length < 3)
                       GestureDetector(
                         onTap: _pickImages,
                         child: Container(
@@ -338,7 +283,7 @@ class _EditPageState extends State<EditPage> {
                 ),
               ),
               const Gap(16),
-              _buildDropdown(
+              _buildDropdown<String>(
                 'Viloyat',
                 profileProvider.availableRegions
                     .map((region) => DropdownMenuItem<String>(
@@ -355,7 +300,7 @@ class _EditPageState extends State<EditPage> {
                   });
                   if (newValue != null) {
                     await profileProvider.fetchDistricts(newValue);
-                    setState(() {}); // districtlar yangilansin
+                    setState(() {});
                   }
                 },
                 validator: (value) {
@@ -367,7 +312,7 @@ class _EditPageState extends State<EditPage> {
               ),
               const Gap(12),
               if (selectedViloyat != null) ...[
-                _buildDropdown(
+                _buildDropdown<String>(
                   'Tuman',
                   profileProvider.availableDistricts
                       .map((district) => DropdownMenuItem<String>(
@@ -394,7 +339,7 @@ class _EditPageState extends State<EditPage> {
                 ),
                 const Gap(12),
                 if (selectedTuman != null)
-                  _buildDropdown(
+                  _buildDropdown<int>(
                     'Mashhur joy',
                     profileProvider.availablePopularPlaces
                         .map((place) => DropdownMenuItem<int>(
@@ -442,7 +387,7 @@ class _EditPageState extends State<EditPage> {
               const Gap(16),
               Row(
                 children: [
-                  const AutoSizeText(
+                  const Text(
                     "Holati:",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
@@ -450,7 +395,7 @@ class _EditPageState extends State<EditPage> {
                   Expanded(
                     child: RadioListTile<bool>(
                       activeColor: AppColors.primaryColor,
-                      title: const AutoSizeText("Bo'sh"),
+                      title: const Text("Bo'sh"),
                       value: true,
                       groupValue: isActive,
                       onChanged: (value) {
@@ -462,7 +407,7 @@ class _EditPageState extends State<EditPage> {
                   ),
                   Expanded(
                     child: RadioListTile<bool>(
-                      title: const AutoSizeText('Band'),
+                      title: const Text('Band'),
                       value: false,
                       activeColor: AppColors.primaryColor,
                       groupValue: isActive,
@@ -490,40 +435,36 @@ class _EditPageState extends State<EditPage> {
                     Provider.of<ProfileProvider>(context, listen: false);
                 final userId = profileProvider.profile?.id;
                 final dacha = DachaModel(
-                  id: widget.dacha.id,
                   name: nameController.text,
                   price: int.tryParse(priceController.text) ?? 0,
                   description: descriptionController.text,
                   phone: phoneController.text.replaceAll(' ', ''),
                   hallCount: int.tryParse(hallCountController.text) ?? 0,
                   bedsCount: int.tryParse(bedsCountController.text) ?? 0,
-                  transactionType: transactionTypeController.text,
+                  transactionType: "rent",
                   isActive: isActive,
                   facilities: selectedFacilities,
-                  images: (widget.dacha.images ?? [])
-                      .where((img) => img.isNotEmpty && img != '/')
-                      .toList(),
-                  createdAt: widget.dacha.createdAt,
-                  updatedAt: DateTime.now(),
-                  deletedAt: widget.dacha.deletedAt,
-                  deleted: widget.dacha.deleted,
-                  address: widget.dacha.address,
-                  propertyType:
-                      selectedPropertyType ?? widget.dacha.propertyType,
+                  images: images,
+                  propertyType: "dacha",
                   popularPlace: selectedPopularPlace?.toString() ?? '',
                   clientType: selectedClientTypeId ?? 0,
                   user: userId,
+                  id: 0,
+                  createdAt: null,
+                  updatedAt: null,
+                  deletedAt: null,
+                  deleted: false,
+                  address: '',
                 );
-                await profileProvider.updateDacha(
-                    context, dacha); // <-- addDacha emas!
+                await profileProvider.addDacha(context, dacha);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                      content: Text('Dacha muvaffaqiyatli yangilandi!')),
+                      content: Text('Dacha muvaffaqiyatli yaratildi!')),
                 );
-                Navigator.pop(context);
+                Get.offAndToNamed(Routes.profilePage);
               }
             },
-            text: 'Saqlash',
+            text: 'Yaratish',
           ),
         ),
       ),
@@ -579,20 +520,4 @@ class _EditPageState extends State<EditPage> {
       validator: validator,
     );
   }
-}
-
-void _showErrorDialog(BuildContext context, String message) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Xatolik'),
-      content: Text(message),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('OK'),
-        ),
-      ],
-    ),
-  );
 }

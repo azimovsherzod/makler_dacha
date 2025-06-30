@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import '../../../../constans/imports.dart';
 
 class ListingDetailPage extends StatelessWidget {
@@ -5,7 +6,6 @@ class ListingDetailPage extends StatelessWidget {
 
   const ListingDetailPage({super.key, required this.dacha});
 
-  // Qulayliklarni faqat borlarini chiqarish uchun widget
   Widget buildFacilitiesChips(
       DachaModel dacha, List<Map<String, dynamic>> availableFacilities) {
     final dachaFacilities =
@@ -43,70 +43,10 @@ class ListingDetailPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: AutoSizeText(
           dacha?.name ?? "Dacha ma'lumoti",
           overflow: TextOverflow.ellipsis,
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () {
-              Get.toNamed(
-                Routes.editPage,
-                arguments: dacha,
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return AlertDialog(
-                    title: const Text("Dachani o'chirish"),
-                    content: const Text(
-                        "Siz ushbu dachani o'chirishni xohlaysizmi?"),
-                    actions: [
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("Bekor qilish"),
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          print("Dacha ID: ${dacha?.id}");
-                          if (dacha?.id == null) {
-                            print("❌ Dacha ID null!");
-                            return;
-                          }
-
-                          final success =
-                              await profileProvider.deleteDacha(dacha!.id!);
-                          if (success) {
-                            Navigator.pop(context); // Dialogni yopish
-                            Navigator.pop(context); // Sahifadan chiqish
-                          } else {
-                            Navigator.pop(context); // Dialogni yopish
-                            Get.snackbar(
-                              "Xatolik",
-                              "Dacha o'chirishda xatolik yuz berdi.",
-                              snackPosition: SnackPosition.TOP,
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
-                            );
-                          }
-                        },
-                        child: const Text("O'chirish"),
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -130,7 +70,7 @@ class ListingDetailPage extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    const AutoSizeText(
                       "Qulayliklar:",
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -152,15 +92,22 @@ class ListingDetailPage extends StatelessWidget {
                       minRating: 1,
                       direction: Axis.horizontal,
                       ignoreGestures: true,
+                      allowHalfRating: false,
                       itemCount: 5,
-                      itemBuilder: (context, _) => Icon(
+                      itemBuilder: (context, _) => const Icon(
                         Icons.star,
                         color: Colors.amber,
                       ),
-                      onRatingUpdate: (double value) {},
+                      onRatingUpdate: (double value) {
+                        Provider.of<ProfileProvider>(context, listen: false)
+                            .sendDachaRating(
+                          dachaId: dacha!.id,
+                          rating: value.toInt(),
+                          userId: dacha?.user ?? '',
+                        );
+                      },
                     ),
                     const Gap(8),
-                    const Text('4.5K'),
                   ],
                 ),
                 const Gap(12),
@@ -173,7 +120,7 @@ class ListingDetailPage extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
-                      child: Text(
+                      child: AutoSizeText(
                         (profileProvider.availableClientTypes.isNotEmpty &&
                                 dacha != null)
                             ? (profileProvider.availableClientTypes.firstWhere(
@@ -199,13 +146,37 @@ class ListingDetailPage extends StatelessWidget {
               padding: const EdgeInsets.only(left: 210.0),
               child: TextButton(
                 onPressed: () {
-                  Get.toNamed(Routes.commentsPages);
+                  if (dacha != null) {
+                    Get.toNamed(Routes.commentsPages, arguments: dacha);
+                  }
                 },
                 child: const Text("Hammasini ko'rish"),
               ),
             ),
             const Gap(12),
-            CommentsWidget(),
+            GestureDetector(
+              onTap: () {
+                if (dacha != null) {
+                  Get.toNamed(Routes.commentsPages, arguments: dacha);
+                }
+              },
+              child: Consumer<ProfileProvider>(
+                builder: (context, provider, child) {
+                  final comments = provider.comments
+                      .where((c) => c.dacha.toString() == dacha?.id.toString())
+                      .toList();
+                  if (comments.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text("Kommentlar yo'q"),
+                    );
+                  }
+                  // Faqat birinchi kommentni ko‘rsatamiz
+                  final comment = comments.first;
+                  return CommentsWidget(comment: comment);
+                },
+              ),
+            ),
             const Gap(12),
             Padding(
               padding: const EdgeInsets.only(left: 200.0),
@@ -214,11 +185,7 @@ class ListingDetailPage extends StatelessWidget {
                 onPressed: () {
                   print("Dacha: $dacha");
                   if (dacha != null) {
-                    Navigator.pushNamed(
-                      context,
-                      Routes.profileDetail,
-                      arguments: dacha,
-                    );
+                    Navigator.pop(context);
                   } else {
                     print("Dacha ma'lumotlari mavjud emas.");
                   }
@@ -236,29 +203,17 @@ class ListingDetailPage extends StatelessWidget {
 
 Widget _buildBottomButtons(BuildContext context, DachaModel? dacha) {
   return Padding(
-    padding: const EdgeInsets.all(12.0),
+    padding: const EdgeInsets.fromLTRB(12, 0, 12, 22),
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Flexible(
-          flex: 1,
+        Expanded(
           child: _buildDialogButton(
             context,
             "Komment",
             "Komment",
             "Komment",
-            dacha, // `dacha`ni uzatish
-          ),
-        ),
-        const Gap(12),
-        Flexible(
-          flex: 1,
-          child: _buildDialogButton(
-            context,
-            "Shikoyat",
-            "Shikoyat",
-            "Shikoyat",
-            dacha, // `dacha`ni uzatish
+            dacha,
           ),
         ),
       ],
@@ -268,6 +223,9 @@ Widget _buildBottomButtons(BuildContext context, DachaModel? dacha) {
 
 Widget _buildDialogButton(BuildContext context, String buttonText, String title,
     String hintText, DachaModel? dacha) {
+  final commentController = TextEditingController();
+  double rating = 0;
+
   return AppButton(
     text: buttonText,
     width: 180,
@@ -278,41 +236,83 @@ Widget _buildDialogButton(BuildContext context, String buttonText, String title,
     onPressed: () {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          actions: [
-            TextField(
-              decoration: InputDecoration(
-                hintText: hintText,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(color: Colors.grey),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide(color: Colors.blue, width: 2.0),
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) => AlertDialog(
+              title: Text(title),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: commentController,
+                      decoration: InputDecoration(
+                        hintText: hintText,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.0),
+                          borderSide: BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16.0),
+                          borderSide:
+                              BorderSide(color: Colors.blue, width: 2.0),
+                        ),
+                      ),
+                      maxLines: 5,
+                    ),
+                    const Gap(12),
+                    RatingBar.builder(
+                      minRating: 1,
+                      direction: Axis.horizontal,
+                      itemCount: 5,
+                      allowHalfRating: true,
+                      itemBuilder: (context, _) => const Icon(
+                        Icons.star,
+                        color: Colors.amber,
+                      ),
+                      onRatingUpdate: (double value) {
+                        setState(() {
+                          rating = value;
+                        });
+                      },
+                    ),
+                    const Gap(12),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: AppButton(
+                        text: "Yuborish",
+                        width: 300,
+                        height: 50,
+                        color: AppColors.primaryColor,
+                        onPressed: () async {
+                          if (dacha != null &&
+                              commentController.text.trim().isNotEmpty &&
+                              rating > 0) {
+                            await Provider.of<ProfileProvider>(context,
+                                    listen: false)
+                                .sendDachaComment(
+                              dachaId: dacha.id,
+                              comment: commentController.text.trim(),
+                              userId: dacha.user ?? '',
+                            );
+                            await Provider.of<ProfileProvider>(context,
+                                    listen: false)
+                                .sendDachaRating(
+                              dachaId: dacha.id,
+                              rating: rating.toInt(),
+                              userId: dacha.user ?? '',
+                            );
+                          }
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              maxLines: 5,
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 12.0),
-              child: AppButton(
-                text: "Yuborish",
-                width: 300,
-                height: 50,
-                color: AppColors.primaryColor,
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    Routes.profileDetail,
-                    arguments: dacha, // `dacha`ni uzatish
-                  );
-                },
-              ),
-            )
-          ],
-        ),
+          );
+        },
       );
     },
   );

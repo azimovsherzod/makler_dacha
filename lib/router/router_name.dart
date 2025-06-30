@@ -20,5 +20,7 @@ sealed class Routes {
   static const String registerPage = '/register-page';
   static const String infoPage = '/info-page';
   static const String groupLogin = '/group-login';
+  static const String noInternetPage = '/no-internet-page';
   static const String verificationCodePage = '/verification-code-page';
+  static const String createDachaPage = '/create-dacha-page';
 }
