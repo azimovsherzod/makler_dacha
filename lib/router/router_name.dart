@@ -23,4 +23,7 @@ sealed class Routes {
   static const String noInternetPage = '/no-internet-page';
   static const String verificationCodePage = '/verification-code-page';
   static const String createDachaPage = '/create-dacha-page';
+  static const String maklerHome = '/makler-home';
+  static const String maklerHomeBodyPage = '/makler-home-body-page';
+  static const String dachaAvailability = '/dacha-availability';
 }

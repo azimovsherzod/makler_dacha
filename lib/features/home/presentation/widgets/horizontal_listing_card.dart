@@ -25,7 +25,7 @@ class HorizontalListingCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(15),
               child: Image.asset(
                 LocalImages.dachaImg,
-                width: 100,
+                width: 120,
                 height: 100,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>

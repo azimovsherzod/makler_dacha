@@ -12,42 +12,40 @@ class CustomSearchContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Container(
-        height: 50, // Фиксированная высота
-        width: MediaQuery.of(context).size.width, // Заполняем всю ширину экрана
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
-          color: const Color(0xFFF2F4FD),
-        ),
-        child: GestureDetector(
-          onTap: () {
-            showSearch(
-              context: context,
-              delegate: CustomSearchDelegate(
-                searchTerms: [
-                  "Toshkent",
-                  "Chirchiq",
-                  "Qoranqul",
-                  "Samarqand",
-                  "Buxoro"
-                ],
-              ),
-            );
-          },
-          child: Row(
+    return Container(
+      height: 55,
+      width: MediaQuery.of(context).size.width,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25),
+        color: const Color(0xFFF2F2F2), // Цвет фона
+      ),
+      child: GestureDetector(
+        onTap: () {
+          showSearch(
+            context: context,
+            delegate: CustomSearchDelegate(
+              searchTerms: [
+                "Toshkent",
+                "Chirchiq",
+                "Qoranqul",
+                "Samarqand",
+                "Buxoro"
+              ],
+            ),
+          );
+        },
+        child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Gap(16), // Отступ слева
+              const Gap(16),
               SvgPicture.asset(
                 LocalIcons.search,
                 width: 24,
                 height: 24,
                 color: Colors.black54,
               ),
-              const Gap(12), // Отступ между иконкой и текстом
+              const Gap(12),
               Expanded(
                 child: Text(
                   placeholderText,
@@ -58,10 +56,9 @@ class CustomSearchContainer extends StatelessWidget {
                   ),
                 ),
               ),
-              const Gap(16), // Отступ справа
-            ],
-          ),
-        ),
+            ]
+            // const Gap(16),],
+            ),
       ),
     );
   }

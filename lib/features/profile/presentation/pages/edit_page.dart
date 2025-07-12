@@ -87,14 +87,6 @@ class _EditPageState extends State<EditPage> {
   }
 
   Future<void> _pickImages() async {
-    if ((widget.dacha.images?.length ?? 0) >= 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Siz maksimal 3 ta rasm tanlashingiz mumkin')),
-      );
-      return;
-    }
-
     final pickedImages = await ImagePicker().pickMultiImage();
     if (pickedImages.isNotEmpty) {
       setState(() {
@@ -105,8 +97,12 @@ class _EditPageState extends State<EditPage> {
         );
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rasm tanlanmadi')),
+      Get.snackbar(
+        "Xatolik",
+        'Xatolik: #rasmlar tanlanmadi',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
       );
     }
   }
@@ -442,7 +438,7 @@ class _EditPageState extends State<EditPage> {
               const Gap(16),
               Row(
                 children: [
-                  const AutoSizeText(
+                  const Text(
                     "Holati:",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
@@ -450,7 +446,7 @@ class _EditPageState extends State<EditPage> {
                   Expanded(
                     child: RadioListTile<bool>(
                       activeColor: AppColors.primaryColor,
-                      title: const AutoSizeText("Bo'sh"),
+                      title: const Text("Bo'sh"),
                       value: true,
                       groupValue: isActive,
                       onChanged: (value) {
@@ -462,7 +458,7 @@ class _EditPageState extends State<EditPage> {
                   ),
                   Expanded(
                     child: RadioListTile<bool>(
-                      title: const AutoSizeText('Band'),
+                      title: const Text('Band'),
                       value: false,
                       activeColor: AppColors.primaryColor,
                       groupValue: isActive,
@@ -490,36 +486,38 @@ class _EditPageState extends State<EditPage> {
                     Provider.of<ProfileProvider>(context, listen: false);
                 final userId = profileProvider.profile?.id;
                 final dacha = DachaModel(
-                  id: widget.dacha.id,
                   name: nameController.text,
                   price: int.tryParse(priceController.text) ?? 0,
                   description: descriptionController.text,
                   phone: phoneController.text.replaceAll(' ', ''),
                   hallCount: int.tryParse(hallCountController.text) ?? 0,
                   bedsCount: int.tryParse(bedsCountController.text) ?? 0,
-                  transactionType: transactionTypeController.text,
+                  transactionType: "rent",
                   isActive: isActive,
                   facilities: selectedFacilities,
                   images: (widget.dacha.images ?? [])
                       .where((img) => img.isNotEmpty && img != '/')
                       .toList(),
-                  createdAt: widget.dacha.createdAt,
-                  updatedAt: DateTime.now(),
-                  deletedAt: widget.dacha.deletedAt,
-                  deleted: widget.dacha.deleted,
-                  address: widget.dacha.address,
-                  propertyType:
-                      selectedPropertyType ?? widget.dacha.propertyType,
+                  propertyType: "dacha",
                   popularPlace: selectedPopularPlace?.toString() ?? '',
                   clientType: selectedClientTypeId ?? 0,
                   user: userId,
+                  id: 0,
+                  createdAt: null,
+                  updatedAt: null,
+                  deletedAt: null,
+                  deleted: false,
+                  address: '',
                 );
-                await profileProvider.updateDacha(
-                    context, dacha); // <-- addDacha emas!
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Dacha muvaffaqiyatli yangilandi!')),
+                await profileProvider.updateDacha(context, dacha);
+                Get.snackbar(
+                  "Muvaffaqiyatli",
+                  "Dacha O'zgartirildi!",
+                  snackPosition: SnackPosition.TOP,
+                  backgroundColor: Colors.green,
+                  colorText: Colors.white,
                 );
+                print("✅ Dacha yangilandi: ${dacha.toJson()}");
                 Navigator.pop(context);
               }
             },

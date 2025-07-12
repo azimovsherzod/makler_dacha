@@ -1,5 +1,3 @@
-import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../constans/imports.dart';
 
@@ -39,11 +37,26 @@ class _CreateDachaPageState extends State<CreateDachaPage> {
     hallCountController = TextEditingController();
     bedsCountController = TextEditingController();
     transactionTypeController = TextEditingController();
-    final profileProvider =
-        Provider.of<ProfileProvider>(context, listen: false);
-    profileProvider.fetchRegions();
-    profileProvider.fetchClientTypes();
-    profileProvider.fetchFacilities();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
+      profileProvider.fetchRegions();
+      profileProvider.fetchClientTypes();
+      profileProvider.fetchFacilities();
+    });
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    priceController.dispose();
+    descriptionController.dispose();
+    phoneController.dispose();
+    hallCountController.dispose();
+    bedsCountController.dispose();
+    transactionTypeController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickImages() async {
@@ -211,75 +224,79 @@ class _CreateDachaPageState extends State<CreateDachaPage> {
               else
                 const Text("Qulayliklar ro'yxati yo'q"),
               const Gap(16),
-              const Align(
-                alignment: Alignment.centerLeft,
+              Padding(
+                padding: const EdgeInsets.only(right: 180),
                 child: Text(
                   "Rasmlar (maksimal 3 ta)",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(fontFamily: 'Montserrat', fontSize: 16),
                 ),
               ),
               const Gap(8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    ...(images
-                        .where(
-                            (imgPath) => imgPath.isNotEmpty && imgPath != '/')
-                        .map((imgPath) => Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: Stack(
-                                alignment: Alignment.topRight,
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: AppColors.primaryColor,
-                                          width: 2),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Image.file(
-                                      File(imgPath),
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        images.remove(imgPath);
-                                      });
-                                    },
-                                    child: Container(
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        shape: BoxShape.circle,
+              Padding(
+                padding: const EdgeInsets.only(right: 300),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ...(images
+                          .where(
+                              (imgPath) => imgPath.isNotEmpty && imgPath != '/')
+                          .map((imgPath) => Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Stack(
+                                  alignment: Alignment.topRight,
+                                  children: [
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                            color: AppColors.primaryColor,
+                                            width: 2),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Icon(Icons.close,
-                                          color: Colors.white, size: 18),
+                                      child: Image.file(
+                                        File(imgPath),
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ))),
-                    if (images.length < 3)
-                      GestureDetector(
-                        onTap: _pickImages,
-                        child: Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                                color: AppColors.primaryColor, width: 2),
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          images.remove(imgPath);
+                                        });
+                                      },
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(Icons.close,
+                                            color: Colors.white, size: 18),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))),
+                      if (images.length < 3)
+                        GestureDetector(
+                          onTap: _pickImages,
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                  color: AppColors.primaryColor, width: 2),
+                            ),
+                            child: const Icon(Icons.add_a_photo,
+                                size: 32, color: Colors.grey),
                           ),
-                          child: const Icon(Icons.add_a_photo,
-                              size: 32, color: Colors.grey),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const Gap(16),
@@ -457,10 +474,6 @@ class _CreateDachaPageState extends State<CreateDachaPage> {
                   address: '',
                 );
                 await profileProvider.addDacha(context, dacha);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Dacha muvaffaqiyatli yaratildi!')),
-                );
                 Get.offAndToNamed(Routes.profilePage);
               }
             },

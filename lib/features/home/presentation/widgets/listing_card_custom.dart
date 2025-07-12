@@ -84,29 +84,26 @@ class ListingCardCustom extends StatelessWidget {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  dacha.price != null ? "\$${dacha.price}" : "Цена не указана",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
-                  ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dacha.price != null ? "\$${dacha.price}" : "Цена не указана",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primaryColor,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  dacha.address,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                dacha.address,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

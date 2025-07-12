@@ -1,8 +1,20 @@
 import '../../../../constans/imports.dart';
 
-class CommentsPage extends StatelessWidget {
+class CommentsPage extends StatefulWidget {
   final DachaModel dacha;
   const CommentsPage({super.key, required this.dacha});
+
+  @override
+  State<CommentsPage> createState() => _CommentsPageState();
+}
+
+class _CommentsPageState extends State<CommentsPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Sahifa ochilganda kommentlarni yuklash
+    Provider.of<ProfileProvider>(context, listen: false).fetchComments();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,11 +26,11 @@ class CommentsPage extends StatelessWidget {
             padding: const EdgeInsets.all(12.0),
             child: Consumer<ProfileProvider>(
               builder: (context, provider, child) {
-                print('dacha.id: ${dacha.id}');
+                print('dacha.id: ${widget.dacha.id}');
                 print(
                     'COMMENTS: ${provider.comments.map((e) => e.dacha).toList()}');
                 final comments = provider.comments
-                    .where((c) => c.dacha == dacha.id.toString())
+                    .where((c) => c.dacha == widget.dacha.id.toString())
                     .toList();
                 print('FILTERED: $comments');
 
@@ -42,8 +54,7 @@ class CommentsPage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12.0),
               color: Colors.white,
-              child: SearchWidget(
-                  dachaId: dacha.id.toString()), // <-- dachaId ni uzating
+              child: SearchWidget(dachaId: widget.dacha.id.toString()),
             ),
           ),
         ],

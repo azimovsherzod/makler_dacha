@@ -50,7 +50,7 @@ class ProfileProvider extends ChangeNotifier {
 
   Future<void> initProfile() async {
     try {
-      print("📡 Profilni yuklash jarayoni boshlandi...");
+      print("📡 Profilni yuklash boshlandi...");
       loadProfile();
       loadDachas();
 
@@ -59,16 +59,21 @@ class ProfileProvider extends ChangeNotifier {
         await refreshToken();
       }
 
+      final token = Hive.box('profileBox').get('access_token');
+      if (token == null) {
+        print("⚠️ Token yo‘q, profil yuklanmaydi.");
+        return;
+      }
+
       final response = await dio.get(
         '/me/',
         options: Options(
           headers: {
-            'Authorization':
-                'Bearer ${Hive.box('profileBox').get('access_token')}',
+            'Authorization': 'Bearer $token',
           },
         ),
       );
-      print("📡 Profilni olish uchun so'rov yuborildi: ${response}");
+      print("📡 Profil uchun so‘rov yuborildi: $response");
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -85,23 +90,9 @@ class ProfileProvider extends ChangeNotifier {
         print("✅ Profil muvaffaqiyatli yuklandi.");
       } else {
         print("❌ Profilni olishda xatolik: ${response.statusCode}");
-        Get.snackbar(
-          "Xatolik",
-          "Profilni olishda xatolik: ${response.statusCode}",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
       }
     } catch (e) {
       print("❌ initProfile funksiyasida xatolik: $e");
-      Get.snackbar(
-        "Xatolik",
-        "Profilni yuklashda xatolik: $e",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
     }
   }
 
@@ -142,7 +133,7 @@ class ProfileProvider extends ChangeNotifier {
       final decoded = decodeToken(token);
       final expiry = DateTime.fromMillisecondsSinceEpoch(decoded['exp'] * 1000);
       if (DateTime.now().isAfter(expiry)) {
-        print("⚠️ Tokenning amal qilish muddati tugagan!");
+        print("⚠️ Token muddati tugagan!");
         return false;
       }
       return true;
@@ -168,80 +159,40 @@ class ProfileProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshToken() async {
+  Future<Map<String, dynamic>?> refreshToken() async {
     final box = Hive.box('profileBox');
     final refreshToken = box.get('refresh_token');
     if (refreshToken == null) {
-      print("⚠️ Refresh токен отсутствует!");
-      Get.snackbar(
-        "Xatolik",
-        "Refresh токен отсутствует!",
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      return;
+      print("⚠️ Refresh token yo‘q, yangilash o‘tkazib yuborildi.");
+      return null; // <-- to'g'ri javob
     }
     try {
-      print("📡 Обновляем токен с использованием refresh_token: $refreshToken");
+      print("📡 Refresh token bilan token yangilanmoqda: $refreshToken");
       final response = await ApiService().makePostRequest(
-        '/auth/token/refresh/',
+        '/token/refresh/',
         data: {'refresh': refreshToken},
       );
       if (response != null && response['access'] != null) {
         box.put('access_token', response['access']);
-        print("✅ Токен успешно обновлен: ${response['access']}");
-        Get.snackbar(
-          "Muvaffaqiyatli",
-          "Token muvaffaqiyatli yangilandi",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
+        print("✅ Token muvaffaqiyatli yangilandi: ${response['access']}");
       } else if (response != null && response['detail'] != null) {
-        print("❌ Ошибка обновления токена: ${response['detail']}");
-        Get.snackbar(
-          "Ошибка авторизации",
-          response['detail'],
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        print("❌ Token yangilashda xatolik: ${response['detail']}");
       } else {
-        print("❌ Неизвестная ошибка при обновлении токена: $response");
-        Get.snackbar(
-          "Xatolik",
-          "Tokenni yangilashda noma'lum xatolik: $response",
-          snackPosition: SnackPosition.TOP,
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
+        print("❌ Token yangilashda noma'lum xatolik: $response");
       }
+      return response;
     } on DioException catch (e) {
-      print("❌ Ошибка при обновлении токена: ${e.response?.data ?? e.message}");
-      Get.snackbar(
-        "Ошибка сети",
-        e.response?.data['detail'] ?? e.message,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print(
+          "❌ Token yangilashda DioException: ${e.response?.data ?? e.message}");
+      return null;
     } catch (e) {
-      print("❌ Неизвестная ошибка: $e");
-      Get.snackbar(
-        "Ошибка",
-        e.toString(),
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      print("❌ Token yangilashda xatolik: $e");
+      return null;
     }
   }
 
-  /// Dacha yaratish: multipart bilan bir nechta rasm yuborish
   Future<void> addDacha(BuildContext context, DachaModel dacha) async {
     try {
-      // TOKENNI TEKSHIRISH VA YANGILASH
       if (!await isTokenValid()) {
         await refreshToken();
       }
@@ -627,16 +578,15 @@ class ProfileProvider extends ChangeNotifier {
     try {
       final token = Hive.box('profileBox').get('access_token');
 
-      // Faqat yangi (local) rasmlarni fayl sifatida yuboramiz
       final List<String> newImages = (dacha.images ?? [])
-          .where((img) => !img.startsWith('/'))
-          .toList()
-          .cast<String>();
-      // Eski (serverdagi) rasmlarni alohida yuboramiz (agar backend qabul qilsa)
+          .where((img) => !img.toString().startsWith('/'))
+          .cast<String>()
+          .toList();
+
       final List<String> existingImages = (dacha.images ?? [])
-          .where((img) => img.startsWith('/'))
-          .toList()
-          .cast<String>();
+          .where((img) => img.toString().startsWith('/'))
+          .cast<String>()
+          .toList();
 
       FormData formData = FormData.fromMap({
         'name': dacha.name,
@@ -652,9 +602,7 @@ class ProfileProvider extends ChangeNotifier {
         'property_type': dacha.propertyType,
         'is_active': dacha.isActive,
         'user': dacha.user,
-        // Eski rasmlar (yo‘llar) backend qabul qilsa
         'existing_images': existingImages,
-        // Faqat yangi tanlangan rasmlar fayl sifatida
         'uploaded_images': [
           for (var imgPath in newImages)
             await MultipartFile.fromFile(imgPath,
@@ -674,11 +622,16 @@ class ProfileProvider extends ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
+        final updatedDacha = DachaModel.fromJson(response.data);
+
+        // provider orqali UI yangilanishi
+        final provider = Provider.of<ProfileProvider>(context, listen: false);
+
         print("✅ Dacha yangilandi: ${response.data}");
         Get.snackbar("Muvaffaqiyatli", "Dacha yangilandi!",
             backgroundColor: Colors.green);
-        await fetchDachas();
-        Navigator.pop(context);
+
+        Navigator.pop(context); // sahifani yopish
       } else {
         print("❌ Xatolik: ${response.data}");
         Get.snackbar("Xatolik", 'Xatolik: ${response.data}',

@@ -1,6 +1,6 @@
 import '../../../../constans/imports.dart';
 
-class ListingCardProfile extends StatelessWidget {
+class ListingCardProfile extends StatefulWidget {
   final DachaModel dacha;
   final List<String> addressOptions;
   final ProfileProvider profileProvider;
@@ -12,6 +12,11 @@ class ListingCardProfile extends StatelessWidget {
     required this.profileProvider,
   });
 
+  @override
+  State<ListingCardProfile> createState() => _ListingCardProfileState();
+}
+
+class _ListingCardProfileState extends State<ListingCardProfile> {
   String getImageUrl(dynamic images) {
     if (images == null || images.isEmpty) {
       return 'https://avatars.mds.yandex.net/i?id=b4801a50e1801125b3173ade9c4a6ffb_l-4948104-images-thumbs&n=13';
@@ -44,7 +49,7 @@ class ListingCardProfile extends StatelessWidget {
   }
 
   String getClientTypeName(dynamic id) {
-    final clientType = profileProvider.availableClientTypes.firstWhere(
+    final clientType = widget.profileProvider.availableClientTypes.firstWhere(
       (type) => type['id']?.toString() == id?.toString(),
       orElse: () => {"name": "Noma'lum"},
     );
@@ -94,188 +99,121 @@ class ListingCardProfile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String name = dacha.name.isNotEmpty ? dacha.name : "Noma'lum dacha";
-    final bool isActive = dacha.isActive;
-    final String image = (dacha.images != null && dacha.images.isNotEmpty)
-        ? dacha.images.first
-        : LocalImages.errorImage;
+    return Consumer<ProfileProvider>(
+      builder: (context, profileProvider, child) {
+        final updatedDacha = widget.profileProvider.dachas.firstWhere(
+            (e) => e.id == widget.dacha.id,
+            orElse: () => widget.dacha);
 
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          print("Card tapped: $name");
-          Get.toNamed(Routes.profileDetail, arguments: dacha);
-        },
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                spreadRadius: 2,
-                offset: const Offset(0, 5),
+        final String name =
+            updatedDacha.name.isNotEmpty ? updatedDacha.name : "Noma'lum dacha";
+        final bool isActive = updatedDacha.isActive;
+
+        return Material(
+          color: Colors.transparent,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              print("Card tapped: $name");
+              Get.toNamed(Routes.profileDetail, arguments: updatedDacha);
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 9),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                  width: 1,
+                ),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Image.network(
-                      getImageUrl(dacha.images),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Image.asset(
-                          LocalImages.errorImage,
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          getImageUrl(updatedDacha.images),
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,
-                        );
-                      },
-                    ),
-                  ),
-                  // Dacha nomi badge chap yuqorida
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              LocalImages.errorImage,
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            );
+                          },
                         ),
                       ),
-                    ),
-                  ),
-                  // "Bo'sh"/"Band" badge o'ng yuqorida
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isActive ? Colors.green : Colors.red,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        isActive ? "Bo'sh" : "Band",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 255, 255, 255),
+                            borderRadius: BorderRadius.circular(18),
+                          ),
+                          child: Text(
+                            name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Narx va joy badge
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
+                  const Gap(12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "\$${updatedDacha.price ?? 0}/sutka",
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const Gap(12),
                   Text(
-                    "\$${dacha.price ?? 0}/sutka",
+                    updatedDacha.description.isNotEmpty
+                        ? updatedDacha.description
+                        : "Noma'lum dacha",
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryColor,
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: Text(
-                      getPopularPlaceName(dacha.popularPlace, addressOptions),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  const Gap(12),
+                  Row(
+                    children: [
+                      InfoIconWithText(
+                        icon: LocalIcons.bed,
+                        text: "${updatedDacha.bedsCount ?? 0}",
                       ),
-                    ),
+                      const Gap(24),
+                      InfoIconWithText(
+                        icon: LocalIcons.bath,
+                        text: "${updatedDacha.hallCount ?? 0}",
+                      ),
+                    ],
                   ),
+                  const Gap(12),
                 ],
               ),
-              const Gap(12),
-              // Client type badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  getClientTypeName(dacha.clientType),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const Gap(12),
-
-              Row(
-                children: [
-                  RatingBar.builder(
-                    minRating: 1,
-                    direction: Axis.horizontal,
-                    ignoreGestures: true,
-                    itemCount: 5,
-                    itemSize: 22,
-                    itemBuilder: (context, _) => const Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                    ),
-                    onRatingUpdate: (double value) {},
-                  ),
-                  const Gap(8),
-                  const Text('4.5K'),
-                ],
-              ),
-              const Gap(12),
-              // Yotoq va zal soni
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    InfoIconWithText(
-                      icon: LocalIcons.bed,
-                      text: "${dacha.bedsCount ?? 0}",
-                    ),
-                    InfoIconWithText(
-                      icon: LocalIcons.bath,
-                      text: "${dacha.hallCount ?? 0}",
-                    ),
-                  ],
-                ),
-              ),
-              const Gap(12),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

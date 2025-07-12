@@ -21,4 +21,6 @@ class LocalIcons {
   static const String heart = '$icons/heart.svg';
   static const String human = '$icons/human.svg';
   static const String home = '$icons/home.svg';
+  static const String liHome = '$images/li_home.svg';
+  static const String liUser = '$images/li_user.svg';
 }

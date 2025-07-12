@@ -73,3 +73,5 @@ export 'package:connectivity_plus/connectivity_plus.dart';
 export 'package:makler_dacha/core/widgets/no_internet_page.dart';
 export 'package:makler_dacha/features/profile/presentation/pages/create_dacha_page.dart';
 export 'package:makler_dacha/features/home/data/models/comments_model.dart';
+export 'package:table_calendar/table_calendar.dart';
+export 'package:makler_dacha/makler_home/presentation/pages/makler_home_body_page.dart';

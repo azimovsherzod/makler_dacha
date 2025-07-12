@@ -5,21 +5,22 @@ Future<void> splashFunctions(BuildContext context) async {
 
   final profileProvider = Provider.of<ProfileProvider>(context, listen: false);
 
-  // Tokenni tekshirish va kerak bo‘lsa yangilash
-  if (!await profileProvider.isTokenValid()) {
-    await profileProvider.refreshToken();
-  }
-
-  // Foydalanuvchi login bo‘lganmi?
   final isLoggedIn =
       Hive.box('profileBox').get('isLoggedIn', defaultValue: false);
 
-  if (isLoggedIn) {
-    // Ma'lumotlarni boshlang'ich yuklash (ixtiyoriy)
+  if (!isLoggedIn) {
+    // Foydalanuvchi login qilmagan bo‘lsa, token tekshirilmaydi, refresh qilinmaydi
+    Get.offNamedUntil(Routes.registerPage, (_) => false);
+    return;
+  }
+
+  try {
+    await profileProvider.refreshToken();
     await profileProvider.initProfile();
     await profileProvider.profileDachas();
-    Get.offNamedUntil(Routes.homePage, (_) => false);
-  } else {
-    Get.offNamedUntil(Routes.registerPage, (_) => false);
+  } catch (e) {
+    print("Token yoki profil yangilashda xatolik: $e");
   }
+
+  Get.offNamedUntil(Routes.maklerHome, (_) => false);
 }

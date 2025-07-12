@@ -11,4 +11,5 @@ class LocalImages {
   static const String person3 = '$images/person3.png';
   static const String dachaImg = '$images/dacha_img.png';
   static const String errorImage = '$images/error_image.png';
+  static const String google = '$images/google.svg';
 }

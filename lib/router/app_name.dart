@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
-
+import 'package:makler_dacha/makler_home/presentation/pages/dacha_availability.dart';
+import 'package:makler_dacha/makler_home/presentation/pages/makler_home.dart';
+import 'package:makler_dacha/makler_home/presentation/pages/makler_home_body_page.dart';
 import '../constans/imports.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -70,6 +72,17 @@ sealed class AppRoutes {
       case Routes.chatPage:
         return CupertinoPageRoute(
             builder: (context) => const ChatPage(), settings: settings);
+      case Routes.maklerHome:
+        return CupertinoPageRoute(
+            builder: (context) => const MaklerHome(), settings: settings);
+      case Routes.maklerHomeBodyPage:
+        return CupertinoPageRoute(
+            builder: (context) => const MaklerHomeBodyPage(),
+            settings: settings);
+      case Routes.dachaAvailability:
+        return CupertinoPageRoute(
+            builder: (context) => const DachaAvailability(),
+            settings: settings);
       case Routes.editPage:
         final dacha = settings.arguments as DachaModel? ??
             DachaModel(

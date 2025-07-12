@@ -5,19 +5,8 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final box = Hive.box('profileBox');
-      final isLoggedIn = box.get('isLoggedIn', defaultValue: false);
-
-      if (isLoggedIn) {
-        final profileProvider =
-            Provider.of<ProfileProvider>(context, listen: false);
-        await profileProvider.refreshToken();
-        await profileProvider.fetchAllData();
-        Get.offAllNamed(Routes.homePage);
-      } else {
-        Get.offAllNamed(Routes.registerPage);
-      }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      splashFunctions(context);
     });
 
     return Scaffold(

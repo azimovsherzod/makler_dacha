@@ -31,7 +31,7 @@ class ListingCard extends StatelessWidget {
     final first = images.first;
     if (first is String) {
       if (first.startsWith('http')) return first;
-      // Agar "/dacha/" bilan boshlansa, "/images/dacha/" ga almashtiramiz
+
       if (first.startsWith('/dacha/')) {
         return '$domain/images/dacha${first.substring(6)}';
       }
@@ -62,7 +62,6 @@ class ListingCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -81,7 +80,7 @@ class ListingCard extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(11),
                 child: Image.network(
                   imageUrl,
                   height: 200,
@@ -92,7 +91,6 @@ class ListingCard extends StatelessWidget {
                   },
                 ),
               ),
-              // Dacha nomi chap yuqorida badge ko‘rinishida
               Positioned(
                 top: 12,
                 left: 12,
@@ -114,7 +112,6 @@ class ListingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              // "Bosh" yoki "Band" badge o'ng yuqorida
               Positioned(
                 top: 12,
                 right: 12,

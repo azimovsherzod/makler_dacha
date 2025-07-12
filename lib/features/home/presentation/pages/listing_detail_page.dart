@@ -1,4 +1,5 @@
 import 'package:auto_size_text/auto_size_text.dart';
+
 import '../../../../constans/imports.dart';
 
 class ListingDetailPage extends StatelessWidget {
@@ -36,6 +37,46 @@ class ListingDetailPage extends StatelessWidget {
     );
   }
 
+  Widget calendarPreview() {
+    // Example implementation: show all days as available (green)
+    final DateTime firstDay =
+        DateTime(DateTime.now().year, DateTime.now().month, 1);
+    final DateTime lastDay =
+        DateTime(DateTime.now().year, DateTime.now().month + 1, 0);
+
+    return TableCalendar(
+      firstDay: firstDay,
+      lastDay: lastDay,
+      focusedDay: DateTime.now(),
+      calendarFormat: CalendarFormat.month,
+      calendarBuilders: CalendarBuilders(
+        defaultBuilder: (context, day, focusedDay) {
+          return Container(
+            width: 45,
+            height: 45,
+            decoration: const BoxDecoration(
+              color: Colors.green,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '${day.day}',
+              style: const TextStyle(color: Colors.white),
+            ),
+          );
+        },
+      ),
+      headerStyle: const HeaderStyle(
+        formatButtonVisible: false,
+        titleCentered: true,
+      ),
+      daysOfWeekStyle: const DaysOfWeekStyle(
+        weekendStyle: TextStyle(color: Colors.red),
+      ),
+      enabledDayPredicate: (_) => true,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profileProvider =
@@ -47,6 +88,7 @@ class ListingDetailPage extends StatelessWidget {
           dacha?.name ?? "Dacha ma'lumoti",
           overflow: TextOverflow.ellipsis,
         ),
+        actions: [],
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -82,6 +124,14 @@ class ListingDetailPage extends StatelessWidget {
                 );
               },
             ),
+            const Gap(12),
+            Text("Bo'sh kunlar:",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black)),
+            const Gap(8),
+            calendarPreview(),
             const Gap(12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -182,13 +232,114 @@ class ListingDetailPage extends StatelessWidget {
               padding: const EdgeInsets.only(left: 200.0),
               child: AppButton(
                 text: "So'rov yuboring",
-                onPressed: () {
-                  print("Dacha: $dacha");
-                  if (dacha != null) {
-                    Navigator.pop(context);
-                  } else {
-                    print("Dacha ma'lumotlari mavjud emas.");
-                  }
+                onPressed: () async {
+                  final List<DateTime> freeDates = [
+                    DateTime(2025, 7, 12),
+                    DateTime(2025, 7, 13),
+                    DateTime(2025, 7, 15),
+                    DateTime(2025, 7, 16),
+                    DateTime(2025, 7, 17),
+                    DateTime(2025, 7, 18),
+                  ];
+                  final List<DateTime> busyDates = [
+                    DateTime(2025, 7, 14),
+                    DateTime(2025, 7, 19),
+                  ];
+
+                  DateTime? rangeStart;
+                  DateTime? rangeEnd;
+
+                  await showDialog(
+                    context: context,
+                    builder: (context) {
+                      return StatefulBuilder(
+                        builder: (context, setState) {
+                          return AlertDialog(
+                            title: const Text("Bo'sh kunlarni tanlang"),
+                            content: SizedBox(
+                              width: 500,
+                              height: 400,
+                              child: TableCalendar(
+                                firstDay: DateTime.now(),
+                                lastDay: DateTime.now()
+                                    .add(const Duration(days: 60)),
+                                focusedDay: rangeStart ?? DateTime.now(),
+                                calendarFormat: CalendarFormat.month,
+                                rangeStartDay: rangeStart,
+                                rangeEndDay: rangeEnd,
+                                availableCalendarFormats: const {
+                                  CalendarFormat.month: 'Oy'
+                                },
+                                calendarStyle: CalendarStyle(
+                                  rangeStartDecoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  rangeEndDecoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  withinRangeDecoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  disabledTextStyle:
+                                      const TextStyle(color: Colors.red),
+                                  todayDecoration: BoxDecoration(
+                                    color: Colors.blue.shade200,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  selectedDecoration: const BoxDecoration(
+                                    color: Colors.green,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  outsideDaysVisible: false,
+                                ),
+                                enabledDayPredicate: (day) {
+                                  // Faqat freeDates ichida bo‘lsa tanlanadi
+                                  return freeDates.any((d) =>
+                                      d.year == day.year &&
+                                      d.month == day.month &&
+                                      d.day == day.day);
+                                },
+                                selectedDayPredicate: (day) =>
+                                    (rangeStart != null &&
+                                        isSameDay(day, rangeStart)) ||
+                                    (rangeEnd != null &&
+                                        isSameDay(day, rangeEnd)),
+                                onRangeSelected: (start, end, focusedDay) {
+                                  setState(() {
+                                    rangeStart = start;
+                                    rangeEnd = end;
+                                  });
+                                },
+                                onDaySelected: (selectedDay, focusedDay) {
+                                  // Faqat range tanlash uchun ishlatilmaydi
+                                },
+                                rangeSelectionMode: RangeSelectionMode.enforced,
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Bekor qilish"),
+                              ),
+                              AppButton(
+                                  onPressed:
+                                      (rangeStart != null && rangeEnd != null)
+                                          ? () {
+                                              print(
+                                                  "Tanlangan oraliq: $rangeStart - $rangeEnd");
+                                              Navigator.pop(context);
+                                            }
+                                          : null,
+                                  text: "Tasdiqlash"),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
                 },
               ),
             ),
@@ -315,5 +466,79 @@ Widget _buildDialogButton(BuildContext context, String buttonText, String title,
         },
       );
     },
+  );
+}
+
+Widget calendarPreview() {
+  final DateTime firstDay =
+      DateTime(DateTime.now().year, DateTime.now().month, 1);
+  final DateTime lastDay =
+      DateTime(DateTime.now().year, DateTime.now().month + 1, 0);
+
+  final List<DateTime> freeDates = [
+    DateTime(DateTime.now().year, DateTime.now().month, 5),
+    DateTime(DateTime.now().year, DateTime.now().month, 8),
+    DateTime(DateTime.now().year, DateTime.now().month, 12),
+    DateTime(DateTime.now().year, DateTime.now().month, 15),
+    DateTime(DateTime.now().year, DateTime.now().month, 18),
+  ];
+  final List<DateTime> busyDates = [
+    DateTime(DateTime.now().year, DateTime.now().month, 7),
+    DateTime(DateTime.now().year, DateTime.now().month, 9),
+    DateTime(DateTime.now().year, DateTime.now().month, 14),
+    DateTime(DateTime.now().year, DateTime.now().month, 19),
+  ];
+
+  return TableCalendar(
+    firstDay: firstDay,
+    lastDay: lastDay,
+    focusedDay: DateTime.now(),
+    calendarFormat: CalendarFormat.month,
+    calendarBuilders: CalendarBuilders(
+      defaultBuilder: (context, day, focusedDay) {
+        final isFree = freeDates.any((d) =>
+            d.year == day.year && d.month == day.month && d.day == day.day);
+        final isBusy = busyDates.any((d) =>
+            d.year == day.year && d.month == day.month && d.day == day.day);
+        if (isBusy) {
+          return Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '${day.day}',
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          );
+        }
+        if (isFree) {
+          return Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: Colors.green,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '${day.day}',
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+            ),
+          );
+        }
+        return null;
+      },
+    ),
+    headerStyle: const HeaderStyle(
+      formatButtonVisible: false,
+      titleCentered: true,
+    ),
+    daysOfWeekStyle: const DaysOfWeekStyle(
+      weekendStyle: TextStyle(color: Colors.red),
+    ),
   );
 }

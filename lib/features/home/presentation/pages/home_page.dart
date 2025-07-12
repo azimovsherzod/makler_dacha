@@ -66,7 +66,7 @@ class _HomeContentPageState extends State<HomeContentPage> {
   @override
   void initState() {
     super.initState();
-    // context faqat builddan keyin mavjud, shuning uchun addPostFrameCallback ishlating
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProfileProvider>(context, listen: false).fetchAllData();
     });
@@ -145,56 +145,66 @@ class _HomeContentPageState extends State<HomeContentPage> {
             ),
           ),
           // AppButton(
-          //     text: "asdas",
+          //     text: "asdasd",
           //     onPressed: () {
           //       profileProvider.logout();
+          //       Get.offAllNamed(Routes.loginPage);
           //     }),
           const Gap(8),
-          (profileProvider.dachas.isEmpty ||
-                  profileProvider.availablePopularPlaces == null)
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: 40),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: profileProvider.dachas.length,
-                  itemBuilder: (context, index) {
-                    final dacha = profileProvider.dachas[index];
-                    final places = profileProvider.availablePopularPlaces ?? [];
-
-                    String popularPlaceName = "Noma'lum joy";
-                    if (dacha.popularPlace != null &&
-                        dacha.popularPlace is int &&
-                        dacha.popularPlace > 0 &&
-                        dacha.popularPlace <= places.length) {
-                      final place = places[dacha.popularPlace - 1];
-                      if (place is Map<String, dynamic> &&
-                          place['name'] is String) {
-                        popularPlaceName = place['name'] as String;
-                      }
-                    }
-
-                    String clientTypeText = getClientTypeName(dacha.clientType);
-
-                    final addressOptions = [
-                      "$popularPlaceName • $clientTypeText"
-                    ];
-
-                    return GestureDetector(
-                      onTap: () {
-                        Get.toNamed(Routes.listingDetailPage, arguments: dacha);
-                      },
-                      child: ListingCard(
-                        dacha: dacha,
-                        addressOptions: addressOptions,
-                      ),
-                    );
-                  },
+          // YANGI QISM:
+          if (profileProvider.dachas.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 0),
+                child: Text(
+                  "Dachalar mavjud emas",
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
                 ),
+              ),
+            )
+          else if (profileProvider.availablePopularPlaces == null)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: CircularProgressIndicator(),
+              ),
+            )
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: profileProvider.dachas.length,
+              itemBuilder: (context, index) {
+                final dacha = profileProvider.dachas[index];
+                final places = profileProvider.availablePopularPlaces ?? [];
+
+                String popularPlaceName = "Noma'lum joy";
+                if (dacha.popularPlace != null &&
+                    dacha.popularPlace is int &&
+                    dacha.popularPlace > 0 &&
+                    dacha.popularPlace <= places.length) {
+                  final place = places[dacha.popularPlace - 1];
+                  if (place is Map<String, dynamic> &&
+                      place['name'] is String) {
+                    popularPlaceName = place['name'] as String;
+                  }
+                }
+
+                String clientTypeText = getClientTypeName(dacha.clientType);
+
+                final addressOptions = ["$popularPlaceName • $clientTypeText"];
+
+                return GestureDetector(
+                  onTap: () {
+                    Get.toNamed(Routes.listingDetailPage, arguments: dacha);
+                  },
+                  child: ListingCard(
+                    dacha: dacha,
+                    addressOptions: addressOptions,
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

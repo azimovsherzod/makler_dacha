@@ -14,8 +14,7 @@ class AuthProvider extends ChangeNotifier {
           response['access'] != null &&
           response['refresh'] != null) {
         Hive.box('profileBox').put('access_token', response['access']);
-        Hive.box('profileBox')
-            .put('refresh_token', response['refresh']); // <-- MUHIM!
+        Hive.box('profileBox').put('refresh_token', response['refresh']);
         Hive.box('profileBox').put('isLoggedIn', true);
         return true;
       } else {
@@ -50,7 +49,7 @@ class AuthProvider extends ChangeNotifier {
       });
 
       dismissLoadingAlert();
-      print("📩 Ответ от сервера: $response");
+      print("📩 Serverda javobi: $response");
 
       if (response != null && response.containsKey('id')) {
         final box = Hive.box('profileBox');
@@ -58,7 +57,6 @@ class AuthProvider extends ChangeNotifier {
         box.put('isLoggedIn', true);
         box.put('user_id', response['id']);
 
-        // Yangi foydalanuvchi uchun access va refresh token ham saqlansin!
         if (response.containsKey('access')) {
           box.put('access_token', response['access']);
         }
@@ -68,27 +66,28 @@ class AuthProvider extends ChangeNotifier {
 
         print("✅ Profil va tokenlar saqlandi: $response");
 
-        Get.snackbar('✅ Успех', 'Регистрация прошла успешно!',
-            backgroundColor: Colors.green);
-        Get.offAndToNamed(Routes.homePage);
+        Get.snackbar(
+            '✅ Muvaffaqiyatli', 'Ro‘yxatdan o‘tish muvaffaqiyatli yakunlandi!',
+            backgroundColor: Colors.green, colorText: Colors.white);
+        Get.offAndToNamed(Routes.maklerHome);
       } else if (response != null && response.containsKey('detail')) {
         String errorMsg = response['detail'].toString();
 
         if (errorMsg.contains('already exists')) {
-          Get.snackbar('⚠️ Внимание', 'Этот пользователь уже зарегистрирован!',
+          Get.snackbar(
+              '⚠️ Diqqat', 'Bu foydalanuvchi allaqachon ro‘yxatdan o‘tgan!',
               backgroundColor: Colors.orange);
         } else {
-          Get.snackbar('❌ Ошибка', errorMsg, backgroundColor: Colors.red);
+          Get.snackbar('❌ Xato', errorMsg, backgroundColor: Colors.red);
         }
       } else {
-        Get.snackbar('❌ Ошибка', 'Неизвестная ошибка регистрации',
-            backgroundColor: Colors.red);
+        Get.snackbar('❌ Xato', "Noma'lum xato", backgroundColor: Colors.red);
       }
     } catch (e) {
       dismissLoadingAlert();
-      print("⚠️ Ошибка регистрации: $e");
-      Get.snackbar(
-          '❌ Ошибка', 'Не удалось зарегистрироваться. Попробуйте снова.',
+      print("⚠️ Ro'yxatdan o'tish jarayonida xatolik: $e");
+      Get.snackbar('❌ Xato',
+          'Ro‘yxatdan o‘tish amalga oshmadi. Iltimos, qaytadan urinib ko‘ring.',
           backgroundColor: Colors.red);
     }
   }
